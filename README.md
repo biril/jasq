@@ -202,13 +202,6 @@ dependencies:
 require(["jasq"], function () {
 	describe("The modA module", "modA", function () {
 
-		// Define a mock for modB
-		var mockB = {
-			getValue: function () {
-				return "C";
-			}
-		};
-
 		// Mocked modB may be accessed through 'dependencies.mocks.modB'
 		it("should expose modB's value", {
 			mock: {
