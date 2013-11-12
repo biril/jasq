@@ -1,64 +1,33 @@
 /*jshint browser:true */
 /*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, stop, jasmine */
-define(["jasq"], function (jasq) {
+define(["helpers", "jasq"], function (helpers, jasq) {
     "use strict";
 
     var
-        isFunction = function (f) {
-            return Object.prototype.toString.call(f) === "[object Function]";
-        },
 
-        each = function (array, iterator) {
-            for (var i = 0, l = array.length; i < l; ++i) { iterator(array[i], i); }
-        },
-
-        specReporter = new (function () {
-            var QUnitReporter = function () {
-                this.suiteExecutedProcessors = {};
-            };
-
-            QUnitReporter.prototype = new jasmine.Reporter();
-            QUnitReporter.prototype.reportSuiteResults = function (suite) {
-                var processor = this.suiteExecutedProcessors[suite.description];
-                this.suiteExecutedProcessors[suite.description] = null; // It's a one-off processor
-                if (!processor) {
-                    throw "Suite '" + suite.description + "' just executed but no processor is set";
-                }
-                processor(suite);
-            };
-
-            QUnitReporter.prototype.setSuiteExecutedProcessor = function (suiteDescription, processor) {
-                if (this.suiteExecutedProcessors[suiteDescription]) {
-                    throw "A processor for suite '" + suiteDescription + "' has already been set";
-                }
-                this.suiteExecutedProcessors[suiteDescription] = processor;
-                return this; // Chain
-            };
-
-            return QUnitReporter;
-        }())(),
-
-        isSpecPassed = function (suite, specDescription) {
-            var theSpec = null;
-            each(suite.specs(), function (spec) {
-                if (specDescription === spec.description) { theSpec = spec; }
-            });
-            // if (!theSpec) { throw "Spec '" + specDescription + "' not found"; }
-            return theSpec && theSpec.results().failedCount === 0;
-        },
-
-        okSuite = function (suite, suiteDescription) {
-            ok(suite.description === suiteDescription && !suite.queue.running, suite.getFullName() + " [has executed]");
-        },
-
-        okSpec = function (suite, specDescription) {
-            ok(isSpecPassed(suite, specDescription), suite.getFullName() + " " + specDescription + " [has passed]");
-        },
+        isFunction   = helpers.isFunction,
+        each         = helpers.each,
+        okSpec       = helpers.okSpec,
+        okSuite      = helpers.okSuite,
+        suiteWatcher = helpers.startSuiteWatcher(jasmine),
 
         globalMethodNames = ["describe", "xdescribe", "it", "xit"];
 
-
-    jasmine.getEnv().addReporter(specReporter);
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // The general idea, repeated on most tests below, goes like this:
+    //
+    //  * QUnit test defines Jasmine suite (plus relevant specs / expectations / nested suites)
+    //  * `suiteWatcher.onCompleted` is invoked to register a specific post-completion processor
+    //    for each suite. The processor's raison d'etre is performing any necessary assertions to
+    //    check whether the Jasmine suite in question executed successfully. If it didn't, the
+    //    test fails
+    //  * Jasmine suite is `.execute()`d
+    //
+    // Note that jasq-expectations (`it`) are async - post-completion processors always need
+    //  to `start` tests
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////
     ////////////////////////////////////
@@ -111,7 +80,7 @@ define(["jasq"], function (jasq) {
         var theThing = "The thing (suite)",
             shouldDoSomething = "should do something (spec)";
 
-        specReporter.setSuiteExecutedProcessor(theThing, function (suite) {
+        suiteWatcher.onCompleted(theThing, function (suite) {
              okSpec(suite, shouldDoSomething);
              okSuite(suite, theThing);
              start();
@@ -132,7 +101,7 @@ define(["jasq"], function (jasq) {
             shouldDoSomething = "should do something (spec)",
             isSecondSpecExecuted = false;
 
-        specReporter.setSuiteExecutedProcessor(theThing, function (suite) {
+        suiteWatcher.onCompleted(theThing, function (suite) {
             ok(!isSecondSpecExecuted, 'disabled spec (xit) did not execute');
             okSpec(suite, shouldDoSomething);
             okSuite(suite, theThing);
@@ -180,7 +149,7 @@ define(["jasq"], function (jasq) {
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
             start();
@@ -210,17 +179,17 @@ define(["jasq"], function (jasq) {
             inTermsOfShape = "in terms of weight (suite)",
             shouldBeRound  = "should be round (spec)";
 
-        specReporter
-        .setSuiteExecutedProcessor(inTermsOfShape, function (suite) {
+        suiteWatcher
+        .onCompleted(inTermsOfShape, function (suite) {
             okSpec(suite, shouldBeRound);
             okSuite(suite, inTermsOfShape);
         })
-        .setSuiteExecutedProcessor(inTermsOfSize, function (suite) {
+        .onCompleted(inTermsOfSize, function (suite) {
             okSpec(suite, shouldBeSmall);
             okSpec(suite, shouldBeLarge);
             okSuite(suite, inTermsOfSize);
         })
-        .setSuiteExecutedProcessor(theEggsModule, function (suite) {
+        .onCompleted(theEggsModule, function (suite) {
             okSpec(suite, shouldBeFried);
             okSpec(suite, shouldBeBoiled);
             okSuite(suite, theEggsModule);
@@ -283,17 +252,17 @@ define(["jasq"], function (jasq) {
             theBaconModule     = "The Bacon Module (suite)",
             shouldBeCrispy     = "should be crispy (spec)";
 
-        specReporter
-        .setSuiteExecutedProcessor(theBaconModule, function (suite) {
+        suiteWatcher
+        .onCompleted(theBaconModule, function (suite) {
             okSpec(suite, shouldBeCrispy);
             okSuite(suite, theBaconModule);
         })
-        .setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        .onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBeSalty);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
         })
-        .setSuiteExecutedProcessor(theEggsModule, function (suite) {
+        .onCompleted(theEggsModule, function (suite) {
             okSpec(suite, shouldBeRound);
             okSpec(suite, shouldBeBoiled);
             okSuite(suite, theEggsModule);
@@ -355,7 +324,7 @@ define(["jasq"], function (jasq) {
             shouldTasteAmazing = "should taste amazing",
             shouldBeSalty = "should be salty";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBeSalty);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
@@ -386,7 +355,7 @@ define(["jasq"], function (jasq) {
             shouldTasteAmazing = "should taste amazing",
             shouldBeSalty = "should be salty";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBeSalty);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
@@ -422,7 +391,7 @@ define(["jasq"], function (jasq) {
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
             start();
@@ -455,7 +424,7 @@ define(["jasq"], function (jasq) {
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
             start();
@@ -484,7 +453,7 @@ define(["jasq"], function (jasq) {
             shouldTasteAmazing = "should taste amazing",
             shouldBeSalty = "should be salty";
 
-        specReporter.setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
             start();
@@ -536,17 +505,17 @@ define(["jasq"], function (jasq) {
             theBaconModule     = "The Bacon Module (suite)",
             shouldBeCrispy     = "should be crispy (spec)";
 
-        specReporter
-        .setSuiteExecutedProcessor(theBaconModule, function (suite) {
+        suiteWatcher
+        .onCompleted(theBaconModule, function (suite) {
             okSpec(suite, shouldBeCrispy);
             okSuite(suite, theBaconModule);
         })
-        .setSuiteExecutedProcessor(theOmeletteModule, function (suite) {
+        .onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBeSalty);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
         })
-        .setSuiteExecutedProcessor(theEggsModule, function (suite) {
+        .onCompleted(theEggsModule, function (suite) {
             okSpec(suite, shouldBeRound);
             okSpec(suite, shouldBeBoiled);
             okSuite(suite, theEggsModule);
@@ -607,189 +576,6 @@ define(["jasq"], function (jasq) {
                 }
             });
 
-        }).execute();
-    });
-
-    ////////////////////////////////////
-    ////////////////////////////////////
-
-    QUnit.module("Example");
-
-    //
-    asyncTest("`modA` is available to specs within the suite", 2, function () {
-
-        var theModAModule = "The modA module (suite)",
-            shouldHaveAValueOfA = "should have a value of 'A' (spec)";
-
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSpec(suite, shouldHaveAValueOfA);
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            // The module is passed to specs within the suite, as a parameter
-            window.it(shouldHaveAValueOfA, {
-                expect: function (modA) {
-                    window.expect(modA.getValue()).toBe("A"); // Passes
-                }
-            });
-        }).execute();
-    });
-
-    //
-    asyncTest("`modA` is available to specs within nested suites", 3, function () {
-
-        var theModAModule = "The modA module (suite)",
-            itsValue = "its value (nested suite)",
-            shouldBeA = "should be 'A' (spec)";
-
-        specReporter.setSuiteExecutedProcessor(itsValue, function (suite) {
-            okSpec(suite, shouldBeA);
-            okSuite(suite, itsValue);
-        });
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            window.describe(itsValue, function () {
-
-                // The module is also passed to specs within the nested suite
-                window.it(shouldBeA, {
-                    expect: function (modA) {
-                        window.expect(modA.getValue()).toBe("A"); // Passes
-                    }
-                });
-            });
-        }).execute();
-    });
-
-    //
-    asyncTest("`modA`'s state is not persisted across specs", 3, function () {
-
-        var theModAModule = "The modA module (suite)",
-            shouldHaveAValueOfAWhenTweaked = "should have a value of 'C' when tweaked (spec)",
-            shouldHaveAValueOfA = "should have a value of A (spec)";
-
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSpec(suite, shouldHaveAValueOfA);
-            okSpec(suite, shouldHaveAValueOfAWhenTweaked);
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            // This spec modifies modA
-            window.it(shouldHaveAValueOfAWhenTweaked, {
-                expect: function (modA) {
-                    modA.getValue = function () {
-                        return "C";
-                    };
-                    window.expect(modA.getValue()).toBe("C"); // Passes
-                }
-            });
-
-            // This spec is passed the original, unmodified modA
-            window.it(shouldHaveAValueOfA, {
-                expect: function (modA) {
-                    window.expect(modA.getValue()).toBe("A"); // Passes
-                }
-            });
-        }).execute();
-    });
-
-    //
-    asyncTest("`modA`'s dependencies may be mocked", 2, function () {
-
-        var theModAModule = "The modA module (suite)",
-            shouldExposeModBsValue = "should expose modB's value (spec)";
-
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            // Define a mock for modB
-            var mockB = {
-                getValue: function () {
-                    return "C";
-                }
-            };
-
-            // modA will use the mocked version of modB
-            window.it(shouldExposeModBsValue, {
-                mock: {
-                    modB: mockB
-                },
-                expect: function (modA) {
-                    window.expect(modA.getModBValue()).toBe("C"); // Passes
-                }
-            });
-        }).execute();
-    });
-
-    //
-    asyncTest("Mocked dependencies may be accessed through `dependencies.mocks`", 2, function () {
-
-        var theModAModule = "The modA module (suite)",
-            shouldExposeModBsValue = "should expose modB's value (spec)";
-
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            // Mocked modB may be accessed through 'dependencies.mocks.modB'
-            window.it(shouldExposeModBsValue, {
-                mock: {
-                    modB: {} // Mocking with an empty object
-                },
-                expect: function (modA, dependencies) {
-                    dependencies.mocks.modB.getValue = function () {
-                        return "D";
-                    };
-                    window.expect(modA.getModBValue()).toBe("D"); // Passes
-                }
-            });
-        }).execute();
-    });
-
-    //
-    asyncTest("Stored dependencies may be accessed through `dependencies.store`", 2, function () {
-
-        var theModAModule = "The modA module (suite)",
-            shouldDelegateToModB = "should delegate to modB to expose modB's value (spec)";
-
-        specReporter.setSuiteExecutedProcessor(theModAModule, function (suite) {
-            okSpec(suite, shouldDelegateToModB);
-            okSuite(suite, theModAModule);
-            start();
-        });
-
-        window.describe(theModAModule, "modA", function () {
-
-            // Stored modB may be accessed through 'dependencies.store.modB'
-            window.it(shouldDelegateToModB, {
-                store: [
-                    "modB"
-                ],
-                expect: function (modA, dependencies) {
-                    window.spyOn(dependencies.store.modB, "getValue");
-                    modA.getModBValue();
-                    window.expect(dependencies.store.modB.getValue).toHaveBeenCalled(); // Passes
-                }
-            });
         }).execute();
     });
 

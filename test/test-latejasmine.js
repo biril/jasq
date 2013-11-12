@@ -1,16 +1,12 @@
 /*jshint browser:true */
 /*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, stop, throws, jasmine */
-define(["jasq"], function (jasq) {
+define(["helpers", "jasq"], function (helpers, jasq) {
     "use strict";
 
     var
-        isFunction = function (f) {
-            return Object.prototype.toString.call(f) === "[object Function]";
-        },
 
-        each = function (array, iterator) {
-            for (var i = 0, l = array.length; i < l; ++i) { iterator(array[i], i); }
-        },
+        isFunction = helpers.isFunction,
+        each = helpers.each,
 
         globalMethodNames = ["describe", "xdescribe", "it", "xit"],
 
