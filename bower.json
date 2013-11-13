@@ -18,7 +18,8 @@
   "ignore": [
     "**/.*",
     "bower_components",
-    "test"
+    "test",
+    "example"
   ],
   "dependencies": {
     "requirejs": "~2.1.9",
