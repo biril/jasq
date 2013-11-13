@@ -29,8 +29,8 @@ define(["squire"], function (Squire) {
         },
 
         // Check if given `descibe` / `xdescribe` args are such that should be handled by jasq
-        //  `descibe` / `xdescribe` instead of Jasmine's native versions. This would be the case if
-        //  the arguments are
+        //  `describe` / `xdescribe` instead of Jasmine's native versions. This would be the case
+        //  if the arguments are
         //   * 1. suite description (string)
         //   * 2. module name (string)
         //   * 3. spec definitions (function)
@@ -60,9 +60,9 @@ define(["squire"], function (Squire) {
             return suitePath;
         },
 
-        // A mapping of suites to modules. A module mapped to a suite, will be made available to
-        //  all specs defined within _that_ (or any _nested_) suite. Suites are identified by path,
-        //  modules are identified by name
+        // A mapping of suites to modules. When mapped to a suite, a module will be made available
+        //  to all specs defined within _that_ (or any _nested_) suite. Suites are identified by
+        //  path (see `getSuitePath`), modules are identified by name
         suitesToModules = (function () {
             var m = [],
                 areEqualSuitePaths = function (p1, p2) {
@@ -167,7 +167,7 @@ define(["squire"], function (Squire) {
                     // It is assumed here that suite paths are unique within the mappings.
                     //  `suitesToModules.add` will throw in the event that a mapping is attempted
                     //  to a pre-existing suite (path). This will generally not happen as
-                    //   * mappings are cleared whenever suites complete (see `setup`/`MapSweeper`)
+                    //   * mappings are cleared whenever suites complete (see `init`/`MapSweeper`)
                     //   * disabled suites (which _never_ complete) are not mapped at all (`isX`
                     //     indicates that this is in fact a disabled suite)
                     //
@@ -201,8 +201,8 @@ define(["squire"], function (Squire) {
                 //          exposed in the spec through `dependencies.store` - a hash of modules
                 //      * `mock`: A hash of mocks, mapping module (name) to mock. These will be
                 //          exposed in the spec through `dependencies.mocks` - a hash of modules
-                //      * `expect`: The expectation function: A callback to be invoked with `module`
-                //          and `dependencies` arguments
+                //      * `expect`: The expectation function: A callback to be invoked with
+                //          `module` and `dependencies` arguments
                 jasqVersion = function (specDescription, specConfig) {
 
                     // If given arguments are not appropriate for the jasq version of `(x)it`
@@ -249,9 +249,9 @@ define(["squire"], function (Squire) {
             return jasqVersion;
         },
 
-        // Ensure that `jasmineEnv` and `jasmineNativeApi` have been set and create the
-        //  patched version of Jasmine's API
-        setup = function () {
+        // Init: Ensure that `jasmineEnv` and `jasmineNativeApi` have been set and create the
+        //  patched version of Jasmine's API. It will only run once
+        init = function () {
             if (!isJasmineInGlobalScope()) {
                 throw "Jasmine is not available in global scope (not loaded?)";
             }
@@ -262,20 +262,21 @@ define(["squire"], function (Squire) {
 
             // Create patched version of Jasmine's API
             each(apiNames, function (name) {
-                jasq[name] = (function (name) {
+                jasq[name] = (function () {
                     switch (name) {
                         case "describe":  return getJasqDescribe();
                         case "xdescribe": return getJasqDescribe(true);
                         case "it":        return getJasqIt();
                         case "xit":       return getJasqIt(true);
                     }
-                }(name));
+                }());
             });
 
-            // Create a jasmine-reporter to perform housekeeping on the map of suites-to-modules.
-            //  It will wait for suites to finish and remove the relevant mapping, if one is found.
-            //  Besides keeping the map from growing indefinitely, this is also necessary to allow
-            //  the definition of multiple suites with the same description.
+            // Register the map-sweeper as a jasmine-reporter to perform housekeeping on the map of
+            //  suites-to-modules. It will wait for suites to finish and remove the relevant
+            //  mapping, if one is found. Besides keeping the map from growing indefinitely, this
+            //  is also necessary to allow the definition of multiple suites with the same
+            //  description.
             jasmineEnv.addReporter((function () {
                 var MapSweeper = function () {};
                 MapSweeper.prototype = new window.jasmine.Reporter();
@@ -285,24 +286,25 @@ define(["squire"], function (Squire) {
                 return new MapSweeper();
             }()));
 
-            // Don't `setup` more than once
-            setup = noOp;
+            // Don't `init` more than once
+            init = noOp;
         };
 
     //
-    jasq.patchGlobals = function () {
-        setup();
+    jasq.applyGlobals = function () {
+        init();
         each(apiNames, function (name) { window[name] = jasq[name]; });
     },
 
     //
     jasq.resetGlobals = function () {
-        setup();
+        init();
         each(apiNames, function (name) { window[name] = jasmineNativeApi[name]; });
     };
 
-    // If Jasmine is already in global scope then go ahead and patch it
-    if (isJasmineInGlobalScope()) { jasq.patchGlobals(); }
+    // If Jasmine is already in global scope then go ahead and apply globals - this will also
+    //  initialize jasq
+    if (isJasmineInGlobalScope()) { jasq.applyGlobals(); }
 
     return jasq;
 });

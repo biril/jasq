@@ -60,7 +60,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             ok(!window[methodName].isJasq, ".. and is not jasq-patched");
         });
 
-        jasq.patchGlobals();
+        jasq.applyGlobals();
 
         each(globalMethodNames, function (methodName) {
             ok(isFunction(window[methodName]), "after patch, '" + methodName + "' is globally available ..");

@@ -30,7 +30,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
-    test("no patched globals are exposed on jasq", 4, function () {
+    test("no jasmine globals (" + globalMethodNames.join(", ") + ") are exposed on jasq", 4, function () {
         if (window.jasmine) { throw "This test requires that Jasmine hasn't loaded"; }
 
         each(globalMethodNames, function (methodName) {
@@ -39,10 +39,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
-    test("attempting to patch/reset globals throws", 2, function () {
+    test("attempting to apply/reset globals throws", 2, function () {
         if (window.jasmine) { throw "This test requires that Jasmine hasn't loaded"; }
 
-        throws(function () { jasq.patchGlobals(); }, "attempting to patch globals throws");
+        throws(function () { jasq.applyGlobals(); }, "attempting to apply globals throws");
         throws(function () { jasq.resetGlobals(); }, "attempting to reset globals throws");
     });
 
@@ -52,13 +52,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     QUnit.module("Environment (Jasmine loaded)");
 
     //
-    asyncTest("patching will expose the jasq-patched globals (globally and on jasq)", 12, function () {
+    asyncTest("applying will expose the jasq-version of Jasmine globals (globally and on jasq)", 12, function () {
         whenJasmineLoaded(function () {
-            jasq.patchGlobals();
+            jasq.applyGlobals();
 
             each(globalMethodNames, function (methodName) {
                 ok(isFunction(window[methodName]), "'" + methodName + "' is globally available ..");
-                strictEqual(window[methodName].isJasq, true, ".. is jasq-patched ..");
+                strictEqual(window[methodName].isJasq, true, ".. is jasq-version ..");
                 strictEqual(jasq[methodName], window[methodName], ".. and is also exposed on jasq");
             });
 
@@ -67,22 +67,22 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
-    asyncTest("globals may be reset and re-patched", 16, function () {
+    asyncTest("globals may be reset and re-applied", 16, function () {
         whenJasmineLoaded(function () {
-            jasq.patchGlobals();
+            jasq.applyGlobals();
 
             jasq.resetGlobals();
 
             each(globalMethodNames, function (methodName) {
                 ok(isFunction(window[methodName]), "after reset, '" + methodName + "' is globally available ..");
-                ok(!window[methodName].isJasq, ".. and is not jasq-patched");
+                ok(!window[methodName].isJasq, ".. and is not jasq-version");
             });
 
-            jasq.patchGlobals();
+            jasq.applyGlobals();
 
             each(globalMethodNames, function (methodName) {
                 ok(isFunction(window[methodName]), "after patch, '" + methodName + "' is globally available ..");
-                strictEqual(window[methodName].isJasq, true, ".. and is jasq-patched");
+                strictEqual(window[methodName].isJasq, true, ".. and is jasq-version");
             });
 
             start();
