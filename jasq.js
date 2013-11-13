@@ -294,7 +294,7 @@ define(["squire"], function (Squire) {
     jasq.applyGlobals = function () {
         init();
         each(apiNames, function (name) { window[name] = jasq[name]; });
-    },
+    };
 
     //
     jasq.resetGlobals = function () {
