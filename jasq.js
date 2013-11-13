@@ -1,4 +1,4 @@
-//     Jasq v0.1.0 - AMD dependency injector integrated with Jasmine
+//     Jasq v0.1.1 - AMD dependency injector integrated with Jasmine
 
 //     https://github.com/biril/jasq
 //     Licensed and freely distributed under the MIT License
