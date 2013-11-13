@@ -244,7 +244,50 @@ require(["jasq"], function () {
 Set up
 ------
 
-_..._
+`bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
+just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
+[RequireJS](https://github.com/jrburke/requirejs) and
+[Squire.js](https://github.com/iammerrick/Squire.js). Typical examples of `test.html` / `main.js`
+to kick off a test suite would look like this
+
+```html
+<html>
+<head>
+    <title>Example Test Suite</title>
+    <link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
+    <script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
+    <script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
+    <script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
+</head>
+
+<body>
+</body>
+</html>
+```
+
+```javascript
+// Configure require
+require.config({
+    baseUrl: "base/path/to/tested/modules",
+    paths: {
+        squire: "path/to/squire",
+        jasq: "path/to/jasq"
+    }
+});
+
+// Configure Jasmine
+var jasmineEnv = jasmine.getEnv(),
+    htmlReporter = new jasmine.HtmlReporter();
+jasmineEnv.addReporter(htmlReporter);
+jasmineEnv.specFilter = function (spec) {
+    return htmlReporter.specFilter(spec);
+};
+
+// Require the spec and run suite once loaded
+require(["path/to/spec"], function () {
+    jasmineEnv.execute();
+});
+```
 
 
 Reference
