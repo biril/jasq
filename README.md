@@ -18,7 +18,7 @@ module is reloaded per spec and uses any mocked dependencies defined.
 
 Jasq defines `describe` and `it` as overloaded versions of Jasmine's 'native' functions which
 differ in the parameters they accept. Using Jasq will _not_ shadow Jasmine's natives - they
-may be invoked (bypassing Jasq functionality) by use of appropriate parameters:
+may be invoked (bypassing Jasq functionality) by use of appropriate arguments:
 
 ```javascript
 // Invoke Jasmine 'descibe'
@@ -50,9 +50,9 @@ it("should do something", {
 };
 ```
 
-Jasq is built on [RequireJS](https://github.com/jrburke/requirejs) and
-[Squire.js](https://github.com/iammerrick/Squire.js). At this point it has only been tested in the
-browser (i.e. no Node support). This may all change.
+Jasq uses [RequireJS](https://github.com/jrburke/requirejs) and
+[Squire.js](https://github.com/iammerrick/Squire.js) for moduling loading. At this point it has
+only been tested in the browser (i.e. no Node support). This may all change.
 
 
 Jasq by example
@@ -247,8 +247,8 @@ Set up
 `bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
 just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
 [RequireJS](https://github.com/jrburke/requirejs) and
-[Squire.js](https://github.com/iammerrick/Squire.js). Typical examples of `test.html` / `main.js`
-to kick off a test suite would look like this
+[Squire.js](https://github.com/iammerrick/Squire.js). A typical example of a `test.html` to kick
+off a test suite would be
 
 ```html
 <html>
@@ -264,6 +264,8 @@ to kick off a test suite would look like this
 </body>
 </html>
 ```
+
+with an accompanying `main.js`:
 
 ```javascript
 // Configure require

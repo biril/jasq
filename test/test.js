@@ -19,13 +19,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     //
     //  * QUnit test defines Jasmine suite (plus relevant specs / expectations / nested suites)
     //  * `suiteWatcher.onCompleted` is invoked to register a specific post-completion processor
-    //    for each suite. The processor's raison d'etre is performing any necessary assertions to
-    //    check whether the Jasmine suite in question executed successfully. If it didn't, the
-    //    test fails
+    //    for each Jasmine suite. The processor's raison d'etre is performing any necessary
+    //    assertions to check whether the Jasmine suite in question executed successfully. If it
+    //    didn't, the test fails
     //  * Jasmine suite is `.execute()`d
     //
-    // Note that jasq-expectations (`it`) are async - post-completion processors always need
-    //  to `start` tests
+    // Note that jasq-expectations (`it`) are async and this forces the enclosing QUnit tests to
+    //  also be async - post-completion processors always `.start()` them
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -167,7 +167,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-        //
+    //
     asyncTest("Module is available to specs within nested suites", 8, function () {
 
         var theEggsModule  = "The Eggs Module (suite)",
