@@ -31,10 +31,8 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         window.describe(theModAModule, "modA", function () {
 
             // The module is passed to specs within the suite, as a parameter
-            window.it(shouldHaveAValueOfA, {
-                expect: function (modA) {
-                    window.expect(modA.getValue()).toBe("A"); // Passes
-                }
+            window.it(shouldHaveAValueOfA, function (modA) {
+                window.expect(modA.getValue()).toBe("A"); // Passes
             });
         }).execute();
     });
@@ -60,10 +58,8 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             window.describe(itsValue, function () {
 
                 // The module is also passed to specs within the nested suite
-                window.it(shouldBeA, {
-                    expect: function (modA) {
-                        window.expect(modA.getValue()).toBe("A"); // Passes
-                    }
+                window.it(shouldBeA, function (modA) {
+                    window.expect(modA.getValue()).toBe("A"); // Passes
                 });
             });
         }).execute();
@@ -86,20 +82,16 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         window.describe(theModAModule, "modA", function () {
 
             // This spec modifies modA
-            window.it(shouldHaveAValueOfAWhenTweaked, {
-                expect: function (modA) {
-                    modA.getValue = function () {
-                        return "C";
-                    };
-                    window.expect(modA.getValue()).toBe("C"); // Passes
-                }
+            window.it(shouldHaveAValueOfAWhenTweaked, function (modA) {
+                modA.getValue = function () {
+                    return "C";
+                };
+                window.expect(modA.getValue()).toBe("C"); // Passes
             });
 
             // This spec is passed the original, unmodified modA
-            window.it(shouldHaveAValueOfA, {
-                expect: function (modA) {
-                    window.expect(modA.getValue()).toBe("A"); // Passes
-                }
+            window.it(shouldHaveAValueOfA, function (modA) {
+                window.expect(modA.getValue()).toBe("A"); // Passes
             });
         }).execute();
     });

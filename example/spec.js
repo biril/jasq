@@ -6,37 +6,29 @@ define(["jasq"], function (jasq) {
     describe("The modA module", "modA", function () {
 
         // The module is passed to specs within the suite, as a parameter
-        it("should have a value of 'A'", {
-            expect: function (modA) {
-                expect(modA.getValue()).toBe("A"); // Passes
-            }
+        it("should have a value of 'A'", function (modA) {
+            expect(modA.getValue()).toBe("A"); // Passes
         });
 
         describe("its value", function () {
 
             // The module is also passed to specs within the nested suite
-            it("should be 'A'", {
-                expect: function (modA) {
-                    expect(modA.getValue()).toBe("A"); // Passes
-                }
+            it("should be 'A'", function (modA) {
+                expect(modA.getValue()).toBe("A"); // Passes
             });
         });
 
         // This spec modifies modA
-        it("should have a value of 'C' when tweaked", {
-            expect: function (modA) {
-                modA.getValue = function () {
-                    return "C";
-                };
-                expect(modA.getValue()).toBe("C"); // Passes
-            }
+        it("should have a value of 'C' when tweaked", function (modA) {
+            modA.getValue = function () {
+                return "C";
+            };
+            expect(modA.getValue()).toBe("C"); // Passes
         });
 
         // This spec is passed the original, unmodified modA
-        it("should have a value of 'A'", {
-            expect: function (modA) {
-                expect(modA.getValue()).toBe("A"); // Passes
-            }
+        it("should have a value of 'A'", function (modA) {
+            expect(modA.getValue()).toBe("A"); // Passes
         });
 
         // Define a mock for modB

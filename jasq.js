@@ -121,7 +121,20 @@ define(["squire"], function (Squire) {
                         suitePath.pop();
                     }
                     throw "Cannot get module for suite '" + suitePath + "' - given suite not present in mappings";
-                }
+                },
+                getIfExists: function (suitePath) {
+                    var mod = null;
+                    while (suitePath.length) {
+                        mod = findSuite(suitePath, function (i) {
+                            return m[i].moduleName;
+                        });
+
+                        if (mod) { return mod; }
+
+                        suitePath.pop();
+                    }
+                    return null;
+                },
             };
         }()),
 
@@ -205,15 +218,24 @@ define(["squire"], function (Squire) {
                 //          `module` and `dependencies` arguments
                 jasqVersion = function (specDescription, specConfig) {
 
-                    // If given arguments are not appropriate for the jasq version of `(x)it`
-                    //  then just run the native Jasmine version
-                    if (!isArgsForJasqIt(arguments)) {
-                        return jasmineNative.apply(null, arguments);
-                    }
-
                     // Get the appropriate module (name) using mapping set up during a previous
                     //  call to `describe`
-                    var moduleName = suitesToModules.get(getSuitePath(jasmineEnv.currentSuite));
+                    var moduleName = suitesToModules.getIfExists(getSuitePath(jasmineEnv.currentSuite));
+
+                    // If given arguments are not appropriate for the jasq-version of `(x)it` ..
+                    if (!isArgsForJasqIt(arguments)) {
+
+                        //  .. _and_ there's no mapped module to pass to the spec then just run
+                        //  the native Jasmine version. Also run the native version in the case
+                        //  that the caller invoked `xit` (the spec will not execute so there's
+                        //  no reason to incur the module (re)loading overhead)
+                        if (!moduleName || isX) { return jasmineNative.apply(null, arguments); }
+
+                        // .. but there _is_ a mapped module then it should be passed into the
+                        //  spec. To do that, an ad-hoc `specConfig` is created and we continue as
+                        //  if the caller explicitly invoked the jasq-version of `(x)it`
+                        specConfig = { expect: specConfig };
+                    }
 
                     // Execute Jasmine's `(x)it` on an appropriately modified _asynchronous_ spec
                     jasmineNative(specDescription, function () {

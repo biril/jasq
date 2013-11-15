@@ -92,8 +92,8 @@ define(["jasq"], function () {
 });
 ```
 
-Define the test suite by invoking the Jasq-`describe`. This accepts the module name as an
-additional parameter:
+Define the test suite by invoking the Jasq-version of `describe`. This accepts the module name
+as an additional parameter:
 
 ```javascript
 require(["jasq"], function () {
@@ -104,26 +104,22 @@ require(["jasq"], function () {
 	});
 });
 ```
-
-This will make `modA` available to all specs within the suite. To access it, use the Jasq-`it`,
-which accepts a `specConfig` hash (instead of the expectation function) as a second argument.
-The `specConfig` should expose the expectation function through the `expect` attribute:
+This will make the module available to all specs within the suite as the expectation-function
+passed to any nested `it` will now be invoked with `modA` as an argument:
 
 ```javascript
 require(["jasq"], function () {
 	describe("The modA module", "modA", function () {
 
 		// The module is passed to specs within the suite, as a parameter
-		it("should have a value of 'A'", {
-			expect: function (modA) {
-				expect(modA.getValue()).toBe("A"); // Passes
-			}
-		}
+		it("should have a value of 'A'", function (modA) {
+			expect(modA.getValue()).toBe("A"); // Passes
+		});
 	});
 });
 ```
 
-Note that the module will also be available to specs of nested suites:
+Note that the module will also be available to specs within _nested_ suites:
 
 ```javascript
 require(["jasq"], function () {
@@ -132,11 +128,9 @@ require(["jasq"], function () {
 		describe("its value", function () {
 
 			// The module is also passed to specs within the nested suite
-			it("should be 'A'", {
-				expect: function (modA) {
-					expect(modA.getValue()).toBe("A"); // Passes
-				}
-			}
+			it("should be 'A'", function (modA) {
+				expect(modA.getValue()).toBe("A"); // Passes
+			});
 		});
 	});
 });
@@ -149,27 +143,25 @@ require(["jasq"], function () {
 	describe("The modA module", "modA", function () {
 
 		// This spec modifies modA
-		it("should have a value of 'C' when tweaked", {
-			expect: function (modA) {
-				modA.getValue = function () {
-					return "C";
-				};
-				expect(modA.getValue()).toBe("C"); // Passes
-			}
+		it("should have a value of 'C' when tweaked", function (modA) {
+			modA.getValue = function () {
+				return "C";
+			};
+			expect(modA.getValue()).toBe("C"); // Passes
 		});
 
 		// This spec is passed the original, unmodified modA
-		it("should have a value of A", {
-			expect: function (modA) {
-				expect(modA.getValue()).toBe("A"); // Passes
-			}
+		it("should have a value of A", function (modA) {
+			expect(modA.getValue()).toBe("A"); // Passes
 		});
 	});
 });
 ```
 
-To mock `modA`'s dependencies use the `specConfig.mock` property. This should be a hash of
-dependencies (module names) mapped to mocks. In the following example, `modB` is mapped to `mockB`:
+To mock `modA`'s dependencies use the Jasq-version of `it` which accepts a `specConfig` hash in
+place of the expectations function. Use the `specConfig.mock` property to define a mapping of
+dependencies (module names) to mocks, as you see fit. Pass the expectations function through the
+`specConfig.expect` property. In the following example, `modB` is mapped to a `mockB` object:
 
 ```javascript
 require(["jasq"], function () {
@@ -195,8 +187,8 @@ require(["jasq"], function () {
 });
 ```
 
-Specs additionally receive a `dependencies` argument which may be used to directly access mocked
-dependencies:
+Specs additionally receive a `dependencies` argument which may be used to directly access any
+mocked dependencies:
 
 ```javascript
 require(["jasq"], function () {
@@ -220,7 +212,7 @@ require(["jasq"], function () {
 
 In certain cases it may be useful to access a dependency without necessarily creating a mock
 beforehand. The `specConfig.store` attribute - an array of module names - may be used to list any
-such dependencies. These will then be available throught `dependencies.store`:
+such dependencies. These will then be available through `dependencies.store`:
 
 ```javascript
 require(["jasq"], function () {
