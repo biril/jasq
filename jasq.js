@@ -94,22 +94,19 @@ define(["squire"], function (Squire) {
                         }
                     });
                 },
-                remove: function (suitePath) {
+                remove: function (suitePath, failHard) {
                     return findSuite(suitePath, {
                         onFound: function (i) {
                             return m.splice(i, 1);
                         },
                         onNotFound: function () {
-                            throw "Cannot remove mapping - suite '" + suitePath + "'' not present in mappings";
+                            if (failHard) {
+                                throw "Cannot remove mapping - suite '" + suitePath + "'' not present in mappings";
+                            }
                         }
                     });
                 },
-                removeIfFound: function (suitePath) {
-                    return findSuite(suitePath, function (i) {
-                        return m.splice(i, 1);
-                    });
-                },
-                get: function (suitePath) {
+                get: function (suitePath, failHard) {
                     var mod = null;
                     while (suitePath.length) {
                         mod = findSuite(suitePath, function (i) {
@@ -120,21 +117,11 @@ define(["squire"], function (Squire) {
 
                         suitePath.pop();
                     }
-                    throw "Cannot get module for suite '" + suitePath + "' - given suite not present in mappings";
-                },
-                getIfExists: function (suitePath) {
-                    var mod = null;
-                    while (suitePath.length) {
-                        mod = findSuite(suitePath, function (i) {
-                            return m[i].moduleName;
-                        });
-
-                        if (mod) { return mod; }
-
-                        suitePath.pop();
+                    if (failHard) {
+                        throw "Cannot get module for suite '" + suitePath + "' - given suite not present in mappings";
                     }
                     return null;
-                },
+                }
             };
         }()),
 
@@ -220,7 +207,7 @@ define(["squire"], function (Squire) {
 
                     // Get the appropriate module (name) using mapping set up during a previous
                     //  call to `describe`
-                    var moduleName = suitesToModules.getIfExists(getSuitePath(jasmineEnv.currentSuite));
+                    var moduleName = suitesToModules.get(getSuitePath(jasmineEnv.currentSuite));
 
                     // If given arguments are not appropriate for the jasq-version of `(x)it` ..
                     if (!isArgsForJasqIt(arguments)) {
@@ -297,13 +284,12 @@ define(["squire"], function (Squire) {
             // Register the map-sweeper as a jasmine-reporter to perform housekeeping on the map of
             //  suites-to-modules. It will wait for suites to finish and remove the relevant
             //  mapping, if one is found. Besides keeping the map from growing indefinitely, this
-            //  is also necessary to allow the definition of multiple suites with the same
-            //  description.
+            //  is also necessary to allow the definition of multiple suites with the same path
             jasmineEnv.addReporter((function () {
                 var MapSweeper = function () {};
                 MapSweeper.prototype = new window.jasmine.Reporter();
                 MapSweeper.prototype.reportSuiteResults = function (suite) {
-                    suitesToModules.removeIfFound(getSuitePath(suite));
+                    suitesToModules.remove(getSuitePath(suite));
                 };
                 return new MapSweeper();
             }()));
