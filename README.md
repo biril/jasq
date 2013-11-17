@@ -6,7 +6,7 @@ Jasq
 
 Jasq simplifies testing AMD modules by overloading Jasmine's `describe` and `it` to
 
-* maintain spec atomicity, avoiding persistent module state
+* avoid persistent module state, maintaining spec atomicity
 * allow mocking of the tested module's dependencies per spec
 
 Jasq is built on the assumption that any Jasmine suite will concern (and thus, test / define the
@@ -50,9 +50,8 @@ it("should do something", {
 };
 ```
 
-Jasq uses [RequireJS](https://github.com/jrburke/requirejs) and
-[Squire.js](https://github.com/iammerrick/Squire.js) for moduling loading. At this point it has
-only been tested in the browser (i.e. no Node support). This may all change.
+Jasq uses [RequireJS](https://github.com/jrburke/requirejs) for loading modules. At this point
+it has only been tested in the browser (i.e. no Node support). This may change in the future.
 
 
 Jasq by example
@@ -238,8 +237,7 @@ Set up
 
 `bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
 just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
-[RequireJS](https://github.com/jrburke/requirejs) and
-[Squire.js](https://github.com/iammerrick/Squire.js). A typical example of a `test.html` to kick
+[RequireJS](https://github.com/jrburke/requirejs). A typical example of a `test.html` to kick
 off a test suite would be
 
 ```html
@@ -264,7 +262,6 @@ with an accompanying `main.js`:
 require.config({
     baseUrl: "base/path/to/tested/modules",
     paths: {
-        squire: "path/to/squire",
         jasq: "path/to/jasq"
     }
 });

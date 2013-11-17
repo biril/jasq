@@ -5,9 +5,9 @@
 //     Copyright (c) 2013 Alex Lambiris
 
 /*jshint browser:true */
-/*global define:false */
+/*global define:false, require:false */
 
-define(["squire"], function (Squire) {
+define(function () {
 
     "use strict";
 
@@ -24,9 +24,27 @@ define(["squire"], function (Squire) {
         isStrictlyObject = function (o) {
             return Object.prototype.toString.call(o) === "[object Object]";
         },
-        each = function (array, iterator) {
-            for (var i = 0, l = array.length; i < l; ++i) { iterator(array[i], i); }
+        each = function (obj, iterator) {
+            var i, l, key;
+            if (!obj) { return; }
+            if (Array.prototype.forEach && obj.forEach === Array.prototype.forEach) {
+                obj.forEach(iterator);
+                return;
+            }
+            if (obj.length === +obj.length) {
+                for (i = 0, l = obj.length; i < l; i++) { iterator(obj[i], i, obj); }
+                return;
+            }
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) { iterator(obj[key], key, obj); }
+            }
         },
+        generateContextId = (function () {
+            var uid = 0;
+            return function (suiteDescription, specDescription) {
+                return suiteDescription + " " + specDescription + " " + (uid++);
+            };
+        }()),
 
         // Check if given `descibe` / `xdescribe` args are such that should be handled by jasq
         //  `describe` / `xdescribe` instead of Jasmine's native versions. This would be the case
@@ -205,9 +223,11 @@ define(["squire"], function (Squire) {
                 //          `module` and `dependencies` arguments
                 jasqVersion = function (specDescription, specConfig) {
 
-                    // Get the appropriate module (name) using mapping set up during a previous
-                    //  call to `describe`
-                    var moduleName = suitesToModules.get(getSuitePath(jasmineEnv.currentSuite));
+                    var currentSuitePath = getSuitePath(jasmineEnv.currentSuite),
+
+                        // Get the appropriate module (name) using mapping set up during a previous
+                        //  call to `describe`
+                        moduleName = suitesToModules.get(currentSuitePath);
 
                     // If given arguments are not appropriate for the jasq-version of `(x)it` ..
                     if (!isArgsForJasqIt(arguments)) {
@@ -215,10 +235,10 @@ define(["squire"], function (Squire) {
                         //  .. _and_ there's no mapped module to pass to the spec then just run
                         //  the native Jasmine version. Also run the native version in the case
                         //  that the caller invoked `xit` (the spec will not execute so there's
-                        //  no reason to incur the module (re)loading overhead)
+                        //  no reason to incur the module (re)loading overhead) ..
                         if (!moduleName || isX) { return jasmineNative.apply(null, arguments); }
 
-                        // .. but there _is_ a mapped module then it should be passed into the
+                        // .. but if there _is_ a mapped module then it should be passed into the
                         //  spec. To do that, an ad-hoc `specConfig` is created and we continue as
                         //  if the caller explicitly invoked the jasq-version of `(x)it`
                         specConfig = { expect: specConfig };
@@ -227,24 +247,60 @@ define(["squire"], function (Squire) {
                     // Execute Jasmine's `(x)it` on an appropriately modified _asynchronous_ spec
                     jasmineNative(specDescription, function () {
 
-                        var isSpecTested = false;
+                        var
 
-                        // Create a new injector ..
-                        (new Squire())
+                            // Mods will be loaded inside a new requirejs context. This is its id
+                            contextId = generateContextId(currentSuitePath, specDescription),
 
-                        // .. specify mocked dependencies as requested ..
-                        .mock(specConfig.mock || {})
+                            // Re-configure require to get a function that will load Modules inside
+                            //  the context of id `contextId`. All other requirejs options are
+                            //  copied over from the default context `_`
+                            _require = require((function () {
+                                var c = {};
+                                each(require.s.contexts._.config, function (val, key) {
+                                    if (key !== "deps") { c[key] = val; }
+                                });
+                                c.context = contextId;
+                                return c;
+                            }())),
 
-                        // .. specify stored dependencies as requesetd ..
-                        .store(specConfig.store || [])
+                            // This Jasmine spec is async as it includes the async `._require` call
+                            isSpecTested = false;
 
-                        // .. and require the module along with all its (mocked / stored) deps
-                        .require([moduleName, 'mocks'], function (module, dependencies) {
+                        //
+                        specConfig.mock || (specConfig.mock = {});
+                        specConfig.store || (specConfig.store = []);
+
+                        // Re-define modules using given mocks
+                        each(specConfig.mock, function (mod, modName) {
+                            define(modName, mod);
+                        });
+
+                        // And require the tested module
+                        _require([moduleName], function (module) {
 
                             // After module & deps are loaded, just run the original spec. Stored
                             //  dependencies should be available through the `dependencies.store`
                             //  hash. Mocked dependencies should be available through the
                             //  `dependencies.mocks` hash
+
+                            var
+
+                                //
+                                context = require.s.contexts[contextId],
+
+                                //
+                                dependencies = { mocks: {}, store: {} };
+
+                            each(specConfig.mock, function (mod, modName) {
+                                dependencies.mocks[modName] = context.defined[modName];
+                            });
+
+                            each(specConfig.store, function (modName) {
+                                dependencies.store[modName] = context.defined[modName];
+                            });
+
+                            //
                             specConfig.expect(module, dependencies);
 
                             isSpecTested = true;
