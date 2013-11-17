@@ -5,8 +5,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
     var
 
-        isFunction   = helpers.isFunction,
-        each         = helpers.each,
+        isFunction       = helpers.isFunction,
+        isStrictlyObject = helpers.isStrictlyObject,
+        each             = helpers.each,
+
         okSpec       = helpers.okSpec,
         okSuite      = helpers.okSuite,
         suiteWatcher = helpers.startSuiteWatcher(jasmine),

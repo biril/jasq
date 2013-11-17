@@ -11,6 +11,11 @@ define(function () {
         },
 
         //
+        isStrictlyObject = function (o) {
+            return Object.prototype.toString.call(o) === "[object Object]";
+        },
+
+        //
         each = function (array, iterator) {
             for (var i = 0, l = array.length; i < l; ++i) { iterator(array[i], i); }
         },
@@ -79,6 +84,7 @@ define(function () {
 
     return {
         isFunction: isFunction,
+        isStrictlyObject: isStrictlyObject,
         each: each,
         okSpec: okSpec,
         okSuite: okSuite,
