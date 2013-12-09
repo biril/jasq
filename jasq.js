@@ -39,12 +39,35 @@ define(function () {
                 if (obj.hasOwnProperty(key)) { iterator(obj[key], key, obj); }
             }
         },
-        generateContextId = (function () {
+        keys = function (obj) {
+            var keys = [];
+            each(obj, function (v, k) { keys.push(k); });
+            return keys;
+        },
+        pick = function (obj, keys) {
+            var picked = {};
+            each(keys, function (key) { picked[key] = obj[key]; });
+            return picked;
+        },
+
+        // Generate a context-id for given `suiteDescription` / `specDescription`
+        createContextId = (function () {
             var uid = 0;
             return function (suiteDescription, specDescription) {
                 return suiteDescription + " " + specDescription + " " + (uid++);
             };
         }()),
+
+        // Re-configure require for context of given id, getting a loader-function. All requirejs
+        // options (except for the context itself) are copied over from the default context `_`
+        configRequireForContext = function (contextId) {
+            var c = {}, _require = null;
+            each(require.s.contexts._.config, function (val, key) {
+                if (key !== "deps") { c[key] = val; }
+            });
+            c.context = contextId;
+            return require.config(c);
+        },
 
         // Check if given `descibe` / `xdescribe` args are such that should be handled by jasq
         //  `describe` / `xdescribe` instead of Jasmine's native versions. This would be the case
@@ -250,21 +273,12 @@ define(function () {
                         var
 
                             // Mods will be loaded inside a new requirejs context. This is its id
-                            contextId = generateContextId(currentSuitePath, specDescription),
+                            contextId = createContextId(currentSuitePath, specDescription),
 
-                            // Re-configure require to get a function that will load Modules inside
-                            //  the context of id `contextId`. All other requirejs options are
-                            //  copied over from the default context `_`
-                            _require = require((function () {
-                                var c = {};
-                                each(require.s.contexts._.config, function (val, key) {
-                                    if (key !== "deps") { c[key] = val; }
-                                });
-                                c.context = contextId;
-                                return c;
-                            }())),
+                            // Get a loader for context of `contextId`
+                            load = configRequireForContext(contextId),
 
-                            // This Jasmine spec is async as it includes the async `._require` call
+                            // This Jasmine spec is async as it includes the async `.load` call
                             isSpecTested = false;
 
                         //
@@ -272,36 +286,21 @@ define(function () {
                         specConfig.store || (specConfig.store = []);
 
                         // Re-define modules using given mocks
-                        each(specConfig.mock, function (mod, modName) {
-                            define(modName, mod);
-                        });
+                        each(specConfig.mock, function (mod, modName) { define(modName, mod); });
 
                         // And require the tested module
-                        _require([moduleName], function (module) {
+                        load([moduleName], function (module) {
+
+                            var loadedDependencies = require.s.contexts[contextId].defined;
 
                             // After module & deps are loaded, just run the original spec. Stored
                             //  dependencies should be available through the `dependencies.store`
                             //  hash. Mocked dependencies should be available through the
                             //  `dependencies.mocks` hash
-
-                            var
-
-                                //
-                                context = require.s.contexts[contextId],
-
-                                //
-                                dependencies = { mocks: {}, store: {} };
-
-                            each(specConfig.mock, function (mod, modName) {
-                                dependencies.mocks[modName] = context.defined[modName];
+                            specConfig.expect(module, {
+                                mocks: pick(loadedDependencies, keys(specConfig.mock)),
+                                store: pick(loadedDependencies, specConfig.store)
                             });
-
-                            each(specConfig.store, function (modName) {
-                                dependencies.store[modName] = context.defined[modName];
-                            });
-
-                            //
-                            specConfig.expect(module, dependencies);
 
                             isSpecTested = true;
                         });
