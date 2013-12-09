@@ -705,6 +705,72 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
+    asyncTest("A constructor function may be used to mock object-returning-modules", 2, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldTasteAmazing = "should taste amazing";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteAmazing);
+            okSuite(suite, theOmeletteModule);
+            start();
+        });
+
+        // A Jasq suite which describes the 'Omelette' module
+        window.describe(theOmeletteModule, "omelette", function () {
+
+            window.it(shouldTasteAmazing, {
+                mock: {
+                    eggs: function () {
+                        return { isMocked: true };
+                    }
+                },
+                expect: function (module, dependencies) {
+                    var mocked = dependencies.mocks;
+                    window.expect(isStrictlyObject(mocked.eggs)).toBeTruthy();
+                    window.expect(mocked.eggs.isMocked).toBeTruthy();
+                    window.expect(mocked.eggs).toBe(module.getEggs());
+                }
+            });
+
+        }).execute();
+    });
+
+    //
+    asyncTest("A constructor function may be used to mock function-returning-modules", 2, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldBeEaten = "should be eaten";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldBeEaten);
+            okSuite(suite, theOmeletteModule);
+            start();
+        });
+
+        // A Jasq suite which describes the 'Omelette' module
+        window.describe(theOmeletteModule, "omelette", function () {
+
+            window.it(shouldBeEaten, {
+                mock: {
+                    eat: function () {
+                        var f = function () { return true; };
+                        f.isMocked = true;
+                        return f;
+                    }
+                },
+                expect: function (module, dependencies) {
+                    var mocked = dependencies.mocks;
+                    window.expect(isFunction(mocked.eat)).toBeTruthy();
+                    window.expect(mocked.eat.isMocked).toBeTruthy();
+                    window.expect(mocked.eat).toBe(module.eat);
+                }
+            });
+
+        }).execute();
+    });
+
+    //
     asyncTest("Specs may be disabled", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
