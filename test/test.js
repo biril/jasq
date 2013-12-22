@@ -36,7 +36,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
     QUnit.module("Environment");
 
-    //
     test("Jasmine globals (" + globalMethodNames.join(", ") + ") are available and jasq-patched", 8, function () {
 
         each(globalMethodNames, function (methodName) {
@@ -76,7 +75,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
     QUnit.module("Plain suites");
 
-    //
     asyncTest("Suites execute", 2, function () {
 
         var theThing = "The thing (suite)",
@@ -96,7 +94,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Specs may be disabled", 3, function () {
 
         var theThing = "The thing (suite)",
@@ -122,7 +119,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Suites may be disabled", 1, function () {
 
         var theThing = "The thing (suite)",
@@ -190,7 +186,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-        //
     asyncTest("Module is available to specs within nested suites (specs defined with Jasmine-syntax)", 8, function () {
 
         var theEggsModule  = "The Eggs Module (suite)",
@@ -253,7 +248,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Module is available to specs within nested suites (specs defined with Jasq-syntax)", 8, function () {
 
         var theEggsModule  = "The Eggs Module (suite)",
@@ -326,7 +320,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Modules in nested suites shadow outer modules (specs defined with Jasmine-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
@@ -394,7 +387,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Modules in nested suites shadow outer modules (specs defined with Jasq-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
@@ -472,7 +464,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Module's state is not persisted across specs", 3, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -504,7 +495,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Mocked (and only mocked) dependencies are injected into tested module", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -532,7 +522,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Mocked dependencies may be accessed through `dependencies.mocks`", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -579,7 +568,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Stored dependencies may be accessed through `dependencies.store`", 3, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -675,7 +663,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Mocked dependencies may be stored", function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -704,7 +691,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("A constructor function may be used to mock object-returning-modules", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -736,7 +722,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("A constructor function may be used to mock function-returning-modules", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -770,7 +755,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Specs may be disabled", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -799,7 +783,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Suites may be disabled", 1, function () {
 
         var theOmeletteModule = "The Omelette Module",
@@ -817,7 +800,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }, 300);
     });
 
-    //
     asyncTest("Specs may be asynchronous", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
@@ -902,5 +884,4 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
         }).execute();
     });
-
 });
