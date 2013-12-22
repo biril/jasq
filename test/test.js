@@ -464,6 +464,29 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
+    asyncTest("Specs defined with Jasq-syntax receive undefined module when enclosed in suite that doesn't define one", 2, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldTasteAmazing = "should taste amazing";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteAmazing);
+            okSuite(suite, theOmeletteModule);
+            start();
+        });
+
+        // A plain suite which includes a jasq-spec
+        window.describe(theOmeletteModule, function () {
+
+            window.it(shouldTasteAmazing, {
+                expect: function (module) {
+                    window.expect(module).toBeUndefined();
+                }
+            });
+
+        }).execute();
+    });
+
     asyncTest("Module's state is not persisted across specs", 3, function () {
 
         var theOmeletteModule = "The Omelette Module",
