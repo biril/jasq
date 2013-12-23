@@ -106,16 +106,16 @@ define(function () {
                     }
                     return true;
                 },
-                findSuite = function (suitePath, opts) {
-                    isFunction(opts) && (opts = { onFound: opts });
-                    opts.onFound || (opts.onFound = noOp);
-                    opts.onNotFound || (opts.onNotFound = noOp);
+                findSuite = function (suitePath, callbacks) {
+                    isFunction(callbacks) && (callbacks = { onFound: callbacks });
+                    callbacks.onFound || (callbacks.onFound = noOp);
+                    callbacks.onNotFound || (callbacks.onNotFound = noOp);
                     for (var i = m.length - 1; i >= 0; --i) {
                         if (areEqualSuitePaths(m[i].suitePath, suitePath)) {
-                            return opts.onFound(i);
+                            return callbacks.onFound(i);
                         }
                     }
-                    return opts.onNotFound();
+                    return callbacks.onNotFound();
                 };
 
             return {
