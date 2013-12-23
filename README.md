@@ -193,13 +193,13 @@ mocked dependencies:
 require(["jasq"], function () {
 	describe("The modA module", "modA", function () {
 
-		// Mocked modB may be accessed through 'dependencies.mocks.modB'
+		// Mocked modB may be accessed through 'dependencies.modB'
 		it("should expose modB's value", {
 			mock: {
 				modB: {} // Mocking with an empty object
 			},
 			expect: function (modA, dependencies) {
-				dependencies.mocks.modB.getValue = function () {
+				dependencies.modB.getValue = function () {
 					return "D";
 				};
 				expect(modA.getModBValue()).toBe("D"); // Passes
@@ -210,22 +210,17 @@ require(["jasq"], function () {
 ```
 
 In certain cases it may be useful to access a dependency without necessarily creating a mock
-beforehand. The `specConfig.store` attribute - an array of module names - may be used to list any
-such dependencies. These will then be available through `dependencies.store`:
+beforehand. The `dependencies` hash may be used to access any dependency, mocked or not:
 
 ```javascript
 require(["jasq"], function () {
 	describe("The modA module", "modA", function () {
 
-		// Stored modB may be accessed through 'dependencies.store.modB'
-		it("should delegate to modB to expose modB's value", {
-			store: [
-				"modB"
-			],
-			expect: function (modA, dependencies) {
-				spyOn(dependencies.store.modB, "getValue");
+		// modB may be accessed through 'dependencies.modB'
+		it("should delegate to modB to expose modB's value", function (modA, dependencies) {
+				spyOn(dependencies.modB, "getValue");
 				modA.getModBValue();
-				expect(dependencies.store.modB.getValue).toHaveBeenCalled(); // Passes
+				expect(dependencies.modB.getValue).toHaveBeenCalled(); // Passes
 			}
 		});
 	});

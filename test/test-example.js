@@ -130,7 +130,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
-    asyncTest("Mocked dependencies may be accessed through `dependencies.mocks`", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies`", 2, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldExposeModBsValue = "should expose modB's value (spec)";
@@ -143,13 +143,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
         window.describe(theModAModule, "modA", function () {
 
-            // Mocked modB may be accessed through 'dependencies.mocks.modB'
+            // Mocked modB may be accessed through 'dependencies.modB'
             window.it(shouldExposeModBsValue, {
                 mock: {
                     modB: {} // Mocking with an empty object
                 },
                 expect: function (modA, dependencies) {
-                    dependencies.mocks.modB.getValue = function () {
+                    dependencies.modB.getValue = function () {
                         return "D";
                     };
                     window.expect(modA.getModBValue()).toBe("D"); // Passes
@@ -159,7 +159,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     });
 
     //
-    asyncTest("Stored dependencies may be accessed through `dependencies.store`", 2, function () {
+    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 2, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldDelegateToModB = "should delegate to modB to expose modB's value (spec)";
@@ -172,16 +172,11 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
         window.describe(theModAModule, "modA", function () {
 
-            // Stored modB may be accessed through 'dependencies.store.modB'
-            window.it(shouldDelegateToModB, {
-                store: [
-                    "modB"
-                ],
-                expect: function (modA, dependencies) {
-                    window.spyOn(dependencies.store.modB, "getValue");
-                    modA.getModBValue();
-                    window.expect(dependencies.store.modB.getValue).toHaveBeenCalled(); // Passes
-                }
+            // Stored modB may be accessed through 'dependencies.modB'
+            window.it(shouldDelegateToModB, function (modA, dependencies) {
+                window.spyOn(dependencies.modB, "getValue");
+                modA.getModBValue();
+                window.expect(dependencies.modB.getValue).toHaveBeenCalled(); // Passes
             });
         }).execute();
     });

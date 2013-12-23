@@ -320,7 +320,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules in nested suites shadow outer modules (specs defined with Jasmine-syntax)", 8, function () {
+    asyncTest("Modules referenced in nested suites shadow those referenced in outer suites (specs defined with Jasmine-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             shouldBeBoiled     = "should be boiled (spec)",
@@ -387,7 +387,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules in nested suites shadow outer modules (specs defined with Jasq-syntax)", 8, function () {
+    asyncTest("Modules referenced in nested suites shadow those referenced in outer suites (specs defined with Jasq-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             shouldBeBoiled     = "should be boiled (spec)",
@@ -536,7 +536,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                 mock: {
                     eggs: { isMocked: true }
                 },
-                expect: function (module, dependencies) {
+                expect: function (module) {
                     window.expect(module.getEggs().isMocked).toBeTruthy(); // Mocked Eggs Module is injected into tested Module
                     window.expect(module.getBacon().isMocked).toBeFalsy(); // Tested Module uses original (non-mocked) Bacon dependency
                 }
@@ -545,7 +545,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies may be accessed through `dependencies.mocks`", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies`", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing",
@@ -564,11 +564,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                 mock: {
                     eggs: { isMocked: true }
                 },
-                expect: function (module, dependencies) {
-                    var mocked = dependencies.mocks;
-                    window.expect(mocked.eggs).toBeTruthy();           // Eggs Module is available as a mocked dependency
-                    window.expect(mocked.eggs.isMocked).toBeTruthy();  // Available Eggs Module is indeed mocked
-                    window.expect(mocked.eggs).toBe(module.getEggs()); // Available Eggs Module is also injected into tested Module
+                expect: function (module, deps) {
+                    window.expect(deps.eggs).toBeTruthy();           // Eggs Module is available as a dependency
+                    window.expect(deps.eggs.isMocked).toBeTruthy();  // Eggs Module is mocked
+                    window.expect(deps.eggs).toBe(module.getEggs()); // Eggs Module is also injected into tested Module
                 }
             });
 
@@ -577,21 +576,20 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                     eggs: { isMocked: true },
                     bacon: { isMocked: true }
                 },
-                expect: function (module, dependencies) {
-                    var mocked = dependencies.mocks;
-                    window.expect(mocked.eggs).toBeTruthy();           // Eggs Module is available as a mocked dependency
-                    window.expect(mocked.eggs.isMocked).toBeTruthy();  // Available Eggs Module is indeed mocked
-                    window.expect(mocked.eggs).toBe(module.getEggs()); // Available Eggs Module is also injected into tested Module
-                    window.expect(mocked.bacon).toBeTruthy();            // Bacon Module is available as a mocked dependency
-                    window.expect(mocked.bacon.isMocked).toBeTruthy();   // Available Bacon Module is indeed mocked
-                    window.expect(mocked.bacon).toBe(module.getBacon()); // Available Bacon Module is also injected into tested Module
+                expect: function (module, deps) {
+                    window.expect(deps.eggs).toBeTruthy();           // Eggs Module is available as a dependency
+                    window.expect(deps.eggs.isMocked).toBeTruthy();  // Eggs Module is mocked
+                    window.expect(deps.eggs).toBe(module.getEggs()); // Eggs Module is also injected into tested Module
+                    window.expect(deps.bacon).toBeTruthy();            // Bacon Module is available as a dependency
+                    window.expect(deps.bacon.isMocked).toBeTruthy();   // Bacon Module is mocked
+                    window.expect(deps.bacon).toBe(module.getBacon()); // Bacon Module is also injected into tested Module
                 }
             });
 
         }).execute();
     });
 
-    asyncTest("Stored dependencies may be accessed through `dependencies.store`", 3, function () {
+    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 3, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing",
@@ -607,107 +605,26 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         // A Jasq suite which describes the 'Omelette' module
         window.describe(theOmeletteModule, "omelette", function () {
 
-            window.it(shouldTasteAmazing, {
-                store: ["eggs"],
-                expect: function (module, dependencies) {
-                    var stored = dependencies.store;
-                    window.expect(stored.eggs.isEggsModule).toBeTruthy(); // Exposes the stored Eggs Module ..
-                    window.expect(stored.eggs).toBe(module.getEggs());    // .. (which is also injected into tested module)
-                }
+            window.it(shouldTasteAmazing, function (module, deps) {
+                window.expect(deps.eggs.isEggsModule).toBeTruthy(); // Eggs Module is available as a dependency
+                window.expect(deps.eggs.isMocked).toBeFalsy();      // Eggs Module is _not_ mocked
+                window.expect(deps.eggs).toBe(module.getEggs());    // Eggs Module is the same as the one used by the Omelette Module
+                window.expect(deps.bacon.isBaconModule).toBeTruthy();
+                window.expect(deps.bacon.isMocked).toBeFalsy();
+                window.expect(deps.bacon).toBe(module.getBacon());
             });
 
             window.it(shouldBeSalty, {
-                store: ["eggs", "bacon"],
-                expect: function (module, dependencies) {
-                    var stored = dependencies.store;
-                    window.expect(stored.eggs.isEggsModule).toBeTruthy();   // Exposes the stored Eggs Module ..
-                    window.expect(stored.eggs).toBe(module.getEggs());      // .. (which is also injected into tested Module) ..
-                    window.expect(stored.bacon.isBaconModule).toBeTruthy(); // .. as well as the stored Bacon Module ..
-                    window.expect(stored.bacon).toBe(module.getBacon());    // .. (which is also injected into tested Module)
-                }
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Mocked dependencies are not stored dependencies", function () {
-
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
-
-        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-            start();
-        });
-
-        // A Jasq suite which describes the 'Omelette' module
-        window.describe(theOmeletteModule, "omelette", function () {
-
-            window.it(shouldTasteAmazing, {
                 mock: {
                     eggs: { isMocked: true }
                 },
-                store: ["bacon"],
-                expect: function (module, dependencies) {
-                    // Eggs Module is not available as a stored dependency
-                    window.expect(dependencies.store.eggs).toBeUndefined();
-                }
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Stored dependencies are not mocked dependencies", function () {
-
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
-
-        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-            start();
-        });
-
-        // A Jasq suite which describes the 'Omelette' module
-        window.describe(theOmeletteModule, "omelette", function () {
-
-            window.it(shouldTasteAmazing, {
-                mock: {
-                    eggs: { isMocked: true }
-                },
-                store: ["bacon"],
-                expect: function (module, dependencies) {
-                    // Bacon Module is not available as a mocked dependency
-                    window.expect(dependencies.mocks.bacon).toBeUndefined();
-                }
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Mocked dependencies may be stored", function () {
-
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
-
-        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-            start();
-        });
-
-        // A Jasq suite which describes the 'Omelette' module
-        window.describe(theOmeletteModule, "omelette", function () {
-
-            window.it(shouldTasteAmazing, {
-                mock: {
-                    eggs: { isMocked: true }
-                },
-                store: ["eggs"],
-                expect: function (module, dependencies) {
-                    window.expect(dependencies.mocks.eggs).toBe(dependencies.store.eggs);
-                    window.expect(dependencies.store.eggs.isMocked).toBeTruthy();
+                expect: function (module, deps) {
+                    window.expect(deps.eggs).toBeTruthy();           // Eggs Module is available as a dependency
+                    window.expect(deps.eggs.isMocked).toBeTruthy();  // Eggs Module is mocked
+                    window.expect(deps.eggs).toBe(module.getEggs()); // Eggs Module is also injected into tested Module
+                    window.expect(deps.bacon).toBeTruthy();            // Bacon Module is available as a dependency
+                    window.expect(deps.bacon.isMocked).toBeFalsy();    // Bacon Module is _not_ mocked
+                    window.expect(deps.bacon).toBe(module.getBacon()); // Bacon Module is the same as the one used by the Omelette Module
                 }
             });
 
@@ -734,11 +651,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                         return { isMocked: true };
                     }
                 },
-                expect: function (module, dependencies) {
-                    var mocked = dependencies.mocks;
-                    window.expect(isStrictlyObject(mocked.eggs)).toBeTruthy();
-                    window.expect(mocked.eggs.isMocked).toBeTruthy();
-                    window.expect(mocked.eggs).toBe(module.getEggs());
+                expect: function (module, deps) {
+                    window.expect(isStrictlyObject(deps.eggs)).toBeTruthy();
+                    window.expect(deps.eggs.isMocked).toBeTruthy();
+                    window.expect(deps.eggs).toBe(module.getEggs());
                 }
             });
 
@@ -767,11 +683,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                         return f;
                     }
                 },
-                expect: function (module, dependencies) {
-                    var mocked = dependencies.mocks;
-                    window.expect(isFunction(mocked.eat)).toBeTruthy();
-                    window.expect(mocked.eat.isMocked).toBeTruthy();
-                    window.expect(mocked.eat).toBe(module.eat);
+                expect: function (module, deps) {
+                    window.expect(isFunction(deps.eat)).toBeTruthy();
+                    window.expect(deps.eat.isMocked).toBeTruthy();
+                    window.expect(deps.eat).toBe(module.eat);
                 }
             });
 

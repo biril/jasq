@@ -38,15 +38,10 @@ define(function () {
                 if (obj.hasOwnProperty(key)) { iterator(obj[key], key, obj); }
             }
         },
-        keys = function (obj) {
-            var keys = [];
-            each(obj, function (v, k) { keys.push(k); });
-            return keys;
-        },
-        pick = function (obj, keys) {
-            var picked = {};
-            each(keys, function (key) { picked[key] = obj[key]; });
-            return picked;
+        clone = function (obj) {
+            var clone = {};
+            each(obj, function (v, k) { clone[k] = v; });
+            return clone;
         },
 
         // Generate a context-id for given `suiteDescription` / `specDescription` pair
@@ -199,26 +194,17 @@ define(function () {
                 //  have to wait for `isSpecTested` to turn true
                 isSpecTested = false;
 
-            //
-            specConfig.mock || (specConfig.mock = {});
-            specConfig.store || (specConfig.store = []);
-
-            // Re-define modules using given mocks, before they're loaded
+            // Re-define modules using given mocks (if any), before they're loaded
             each(specConfig.mock, function (mod, modName) { define(modName, mod); });
 
             // And require the tested module
             load([moduleName], function (module) {
 
-                var loadedDependencies = require.s.contexts[contextId].defined;
-
-                // After module & deps are loaded, just run the original spec. Stored
-                //  dependencies should be available through the `dependencies.store`
-                //  hash. Mocked dependencies should be available through the
-                //  `dependencies.mocks` hash
-                specConfig.expect(module, {
-                    mocks: pick(loadedDependencies, keys(specConfig.mock)),
-                    store: pick(loadedDependencies, specConfig.store)
-                });
+                // After module & deps are loaded, just run the original spec. Dependencies
+                //  (mocked and non-mocked) should be available through the `dependencies` hash.
+                //  (Note that a dependencies 'clone' is passed to avoid exposing the original
+                //  hash that require maintains)
+                specConfig.expect(module, clone(require.s.contexts[contextId].defined));
 
                 isSpecTested = true;
             });
