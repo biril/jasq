@@ -137,22 +137,51 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }, 300);
     });
 
+    asyncTest("Specs receive undefined module when enclosed in suite that doesn't define one", 3, function () {
+
+        var theOmeletteModule      = "The Omelette Module (suite)",
+            shouldTasteAmazing     = "should taste amazing (spec)",
+            shouldTasteMoreAmazing = "should taste more amazing (spec)";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteMoreAmazing);
+            okSpec(suite, shouldTasteAmazing);
+            okSuite(suite, theOmeletteModule);
+            start();
+        });
+
+        // A plain suite which includes a jasq-spec
+        window.describe(theOmeletteModule, function () {
+
+            window.it(shouldTasteAmazing, function (module) {
+                window.expect(module).toBeUndefined();
+            });
+
+            window.it(shouldTasteMoreAmazing, {
+                expect: function (module) {
+                    window.expect(module).toBeUndefined();
+                }
+            });
+
+        }).execute();
+    });
+
     ////////////////////////////////////
     ////////////////////////////////////
 
     QUnit.module("Jasq suites");
 
-    asyncTest("Module is available to specs within the suite (specs defined with Jasmine-syntax)", 4, function () {
+    asyncTest("Module is available to specs within the suite", 3, function () {
 
         var theOmeletteModule      = "The Omelette Module (suite)",
             shouldTasteAmazing     = "should taste amazing (spec)",
-            theSaltyOmeletteModule = "The salty Omelette Module (suite)",
-            shouldBeSalty          = "should be salty (spec)";
+            shouldTasteMoreAmazing = "should taste more amazing (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteMoreAmazing);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
-            // start();
+            start();
         });
 
         // A Jasq suite which describes the 'Omelette' module
@@ -161,98 +190,48 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             window.it(shouldTasteAmazing, function (module) {
                 window.expect(module.isOmeletteModule).toBeTruthy();
             });
-
-        }).execute();
-
-        // With alternative describe syntax:
-        suiteWatcher.onCompleted(theSaltyOmeletteModule, function (suite) {
-            okSpec(suite, shouldBeSalty);
-            okSuite(suite, theSaltyOmeletteModule);
-            start();
-        });
-
-        window.describe(theSaltyOmeletteModule, {
-            moduleName: "omelette",
-            specify: function () {
-
-                window.it(shouldBeSalty, function (module) {
-                    window.expect(module.isOmeletteModule).toBeTruthy();
-                });
-
-            }
-
-        }).execute();
-    });
-
-    asyncTest("Module is available to specs within the suite (specs defined with Jasq-syntax)", 4, function () {
-
-        var theOmeletteModule      = "The Omelette Module (suite)",
-            shouldTasteAmazing     = "should taste amazing (spec)",
-            theSaltyOmeletteModule = "The salty Omelette Module (suite)",
-            shouldBeSalty          = "should be salty (spec)";
-
-        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-            // start();
-        });
-
-        // A Jasq suite which describes the 'Omelette' module
-        window.describe(theOmeletteModule, "omelette", function () {
-
-            window.it(shouldTasteAmazing, {
+            window.it(shouldTasteMoreAmazing, {
                 expect: function (module) {
                     window.expect(module.isOmeletteModule).toBeTruthy();
                 }
             });
 
         }).execute();
-
-        // With alternative describe syntax:
-        suiteWatcher.onCompleted(theSaltyOmeletteModule, function (suite) {
-            okSpec(suite, shouldBeSalty);
-            okSuite(suite, theSaltyOmeletteModule);
-            start();
-        });
-
-        window.describe(theSaltyOmeletteModule, {
-            moduleName: "omelette",
-            specify: function () {
-
-                window.it(shouldBeSalty, {
-                    expect: function (module) {
-                        window.expect(module.isOmeletteModule).toBeTruthy();
-                    }
-                });
-
-            }
-
-        }).execute();
     });
 
-    asyncTest("Module is available to specs within nested suites (specs defined with Jasmine-syntax)", 8, function () {
+    asyncTest("Module is available to specs within nested suites", 13, function () {
 
-        var theEggsModule  = "The Eggs Module (suite)",
-            shouldBeBoiled = "should be boiled (spec)",
-            shouldBeFried  = "should be fried (spec)",
-            inTermsOfSize  = "in terms of size (suite)",
-            shouldBeLarge  = "should be large (spec)",
-            shouldBeSmall  = "should be small (spec)",
-            inTermsOfShape = "in terms of weight (suite)",
-            shouldBeRound  = "should be round (spec)";
+        var theEggsModule      = "The Eggs Module (suite)",
+            shouldBeBoiled     = "should be boiled (spec)",
+            shouldBeMoreBoiled = "should be more boiled (spec)",
+            shouldBeFried      = "should be fried (spec)",
+            shouldBeMoreFried  = "should be more fried (spec)",
+            inTermsOfSize      = "in terms of size (suite)",
+            shouldBeLarge      = "should be large (spec)",
+            shouldBeLarger     = "should be larger (spec)",
+            shouldBeSmall      = "should be small (spec)",
+            shouldBeSmaller    = "should be smaller (spec)",
+            inTermsOfShape     = "in terms of weight (suite)",
+            shouldBeRound      = "should be round (spec)",
+            shouldBeMoreRound  = "should be more round (spec)";
 
         suiteWatcher
         .onCompleted(inTermsOfShape, function (suite) {
+            okSpec(suite, shouldBeMoreRound);
             okSpec(suite, shouldBeRound);
             okSuite(suite, inTermsOfShape);
         })
         .onCompleted(inTermsOfSize, function (suite) {
+            okSpec(suite, shouldBeSmaller);
             okSpec(suite, shouldBeSmall);
+            okSpec(suite, shouldBeLarger);
             okSpec(suite, shouldBeLarge);
             okSuite(suite, inTermsOfSize);
         })
         .onCompleted(theEggsModule, function (suite) {
+            okSpec(suite, shouldBeMoreFried);
             okSpec(suite, shouldBeFried);
+            okSpec(suite, shouldBeMoreBoiled);
             okSpec(suite, shouldBeBoiled);
             okSuite(suite, theEggsModule);
             start();
@@ -264,12 +243,22 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             window.it(shouldBeBoiled, function (module) {
                 window.expect(module.isEggsModule).toBeTruthy();
             });
+            window.it(shouldBeMoreBoiled, {
+                expect: function (module) {
+                    window.expect(module.isEggsModule).toBeTruthy();
+                }
+            });
 
             // A _nested_ jasq suite which describes the 'Eggs' Module in terms of size
             window.describe(inTermsOfSize, function () {
 
                 window.it(shouldBeLarge, function (module) {
                     window.expect(module.isEggsModule).toBeTruthy();
+                });
+                window.it(shouldBeLarger, {
+                    expect: function (module) {
+                        window.expect(module.isEggsModule).toBeTruthy();
+                    }
                 });
 
                 // A _nested_ _nested_ jasq suite which describes the 'Eggs' Module in terms of shape
@@ -278,84 +267,27 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                     window.it(shouldBeRound, function (module) {
                         window.expect(module.isEggsModule).toBeTruthy();
                     });
-                });
-
-                window.it(shouldBeSmall, function (module) {
-                    window.expect(module.isEggsModule).toBeTruthy();
-                });
-            });
-
-            window.it(shouldBeFried, function (module) {
-                window.expect(module.isEggsModule).toBeTruthy();
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Module is available to specs within nested suites (specs defined with Jasq-syntax)", 8, function () {
-
-        var theEggsModule  = "The Eggs Module (suite)",
-            shouldBeBoiled = "should be boiled (spec)",
-            shouldBeFried  = "should be fried (spec)",
-            inTermsOfSize  = "in terms of size (suite)",
-            shouldBeLarge  = "should be large (spec)",
-            shouldBeSmall  = "should be small (spec)",
-            inTermsOfShape = "in terms of weight (suite)",
-            shouldBeRound  = "should be round (spec)";
-
-        suiteWatcher
-        .onCompleted(inTermsOfShape, function (suite) {
-            okSpec(suite, shouldBeRound);
-            okSuite(suite, inTermsOfShape);
-        })
-        .onCompleted(inTermsOfSize, function (suite) {
-            okSpec(suite, shouldBeSmall);
-            okSpec(suite, shouldBeLarge);
-            okSuite(suite, inTermsOfSize);
-        })
-        .onCompleted(theEggsModule, function (suite) {
-            okSpec(suite, shouldBeFried);
-            okSpec(suite, shouldBeBoiled);
-            okSuite(suite, theEggsModule);
-            start();
-        });
-
-        // A Jasq suite which describes the 'Eggs' Module
-        window.describe(theEggsModule, "eggs", function () {
-
-            window.it(shouldBeBoiled, {
-                expect: function (module) {
-                    window.expect(module.isEggsModule).toBeTruthy();
-                }
-            });
-
-            // A _nested_ jasq suite which describes the 'Eggs' Module in terms of size
-            window.describe(inTermsOfSize, function () {
-
-                window.it(shouldBeLarge, {
-                    expect: function (module) {
-                        window.expect(module.isEggsModule).toBeTruthy();
-                    }
-                });
-
-                // A _nested_ _nested_ jasq suite which describes the 'Eggs' Module in terms of shape
-                window.describe(inTermsOfShape, function () {
-
-                    window.it(shouldBeRound, {
+                    window.it(shouldBeMoreRound, {
                         expect: function (module) {
                             window.expect(module.isEggsModule).toBeTruthy();
                         }
                     });
                 });
 
-                window.it(shouldBeSmall, {
+                window.it(shouldBeSmall, function (module) {
+                    window.expect(module.isEggsModule).toBeTruthy();
+                });
+                window.it(shouldBeSmaller, {
                     expect: function (module) {
                         window.expect(module.isEggsModule).toBeTruthy();
                     }
                 });
             });
 
-            window.it(shouldBeFried, {
+            window.it(shouldBeFried, function (module) {
+                window.expect(module.isEggsModule).toBeTruthy();
+            });
+            window.it(shouldBeMoreFried, {
                 expect: function (module) {
                     window.expect(module.isEggsModule).toBeTruthy();
                 }
@@ -364,29 +296,39 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules associated with nested suites shadow those of outer suites (specs defined with Jasmine-syntax)", 8, function () {
+    asyncTest("Modules associated with nested suites shadow those of outer suites", 13, function () {
 
-        var theEggsModule      = "The Eggs Module (suite)",
-            shouldBeBoiled     = "should be boiled (spec)",
-            shouldBeRound      = "should be round (spec)",
-            theOmeletteModule  = "The Omelette Module (suite)",
-            shouldTasteAmazing = "should taste amazing (spec)",
-            shouldBeSalty      = "should be salty (spec)",
-            theBaconModule     = "The Bacon Module (suite)",
-            shouldBeCrispy     = "should be crispy (spec)";
+        var theEggsModule          = "The Eggs Module (suite)",
+            shouldBeBoiled         = "should be boiled (spec)",
+            shouldBeMoreBoiled     = "should be more boiled (spec)",
+            shouldBeRound          = "should be round (spec)",
+            shouldBeMoreRound      = "should be more round (spec)",
+            theOmeletteModule      = "The Omelette Module (suite)",
+            shouldTasteAmazing     = "should taste amazing (spec)",
+            shouldTasteMoreAmazing = "should taste more amazing (spec)",
+            shouldBeSalty          = "should be salty (spec)",
+            shouldBeMoreSalty      = "should be salty (spec)",
+            theBaconModule         = "The Bacon Module (suite)",
+            shouldBeCrispy         = "should be crispy (spec)",
+            shouldBeMoreCrispy     = "should be more crispy (spec)";
 
         suiteWatcher
         .onCompleted(theBaconModule, function (suite) {
+            okSpec(suite, shouldBeMoreCrispy);
             okSpec(suite, shouldBeCrispy);
             okSuite(suite, theBaconModule);
         })
         .onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldBeMoreSalty);
             okSpec(suite, shouldBeSalty);
+            okSpec(suite, shouldTasteMoreAmazing);
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
         })
         .onCompleted(theEggsModule, function (suite) {
+            okSpec(suite, shouldBeMoreRound);
             okSpec(suite, shouldBeRound);
+            okSpec(suite, shouldBeMoreBoiled);
             okSpec(suite, shouldBeBoiled);
             okSuite(suite, theEggsModule);
             start();
@@ -398,6 +340,11 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             // This expectation refers to the Eggs Module
             window.it(shouldBeBoiled, function (module) {
                 window.expect(module.isEggsModule).toBeTruthy();
+            });
+            window.it(shouldBeMoreBoiled, {
+                expect: function (module) {
+                    window.expect(module.isEggsModule).toBeTruthy();
+                }
             });
 
             // A _nested_ jasq suite which describes the 'Omelette' Module
@@ -407,6 +354,11 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                 window.it(shouldTasteAmazing, function (module) {
                     window.expect(module.isOmeletteModule).toBeTruthy();
                 });
+                window.it(shouldTasteMoreAmazing, {
+                    expect: function (module) {
+                        window.expect(module.isOmeletteModule).toBeTruthy();
+                    }
+                });
 
                 // A _nested_ _nested_ jasq suite which describes the 'Bacon' Module
                 window.describe(theBaconModule, "bacon", function () {
@@ -415,75 +367,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                     window.it(shouldBeCrispy, function (module) {
                         window.expect(module.isBaconModule).toBeTruthy();
                     });
-                });
-
-                // This expectation refers to the Omelette Module
-                window.it(shouldBeSalty, function (module) {
-                    window.expect(module.isOmeletteModule).toBeTruthy();
-                });
-            });
-
-            // This expectation refers to the Eggs Module
-            window.it(shouldBeRound, function (module) {
-                window.expect(module.isEggsModule).toBeTruthy();
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Modules associated with nested suites shadow those of outer suites (specs defined with Jasq-syntax)", 8, function () {
-
-        var theEggsModule      = "The Eggs Module (suite)",
-            shouldBeBoiled     = "should be boiled (spec)",
-            shouldBeRound      = "should be round (spec)",
-            theOmeletteModule  = "The Omelette Module (suite)",
-            shouldTasteAmazing = "should taste amazing (spec)",
-            shouldBeSalty      = "should be salty (spec)",
-            theBaconModule     = "The Bacon Module (suite)",
-            shouldBeCrispy     = "should be crispy (spec)";
-
-        suiteWatcher
-        .onCompleted(theBaconModule, function (suite) {
-            okSpec(suite, shouldBeCrispy);
-            okSuite(suite, theBaconModule);
-        })
-        .onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldBeSalty);
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-        })
-        .onCompleted(theEggsModule, function (suite) {
-            okSpec(suite, shouldBeRound);
-            okSpec(suite, shouldBeBoiled);
-            okSuite(suite, theEggsModule);
-            start();
-        });
-
-        // A Jasq suite which describes the 'Eggs' Module
-        window.describe(theEggsModule, "eggs", function () {
-
-            // This expectation refers to the Eggs Module
-            window.it(shouldBeBoiled, {
-                expect: function (module) {
-                    window.expect(module.isEggsModule).toBeTruthy();
-                }
-            });
-
-            // A _nested_ jasq suite which describes the 'Omelette' Module
-            window.describe(theOmeletteModule, "omelette", function () {
-
-                // This expectation refers to the Omelette Module
-                window.it(shouldTasteAmazing, {
-                    expect: function (module) {
-                        window.expect(module.isOmeletteModule).toBeTruthy();
-                    }
-                });
-
-                // A _nested_ _nested_ jasq suite which describes the 'Bacon' Module
-                window.describe(theBaconModule, "bacon", function () {
-
-                    // This expectation refers to the Bacon Module
-                    window.it(shouldBeCrispy, {
+                    window.it(shouldBeMoreCrispy, {
                         expect: function (module) {
                             window.expect(module.isBaconModule).toBeTruthy();
                         }
@@ -491,7 +375,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                 });
 
                 // This expectation refers to the Omelette Module
-                window.it(shouldBeSalty, {
+                window.it(shouldBeSalty, function (module) {
+                    window.expect(module.isOmeletteModule).toBeTruthy();
+                });
+                window.it(shouldBeMoreSalty, {
                     expect: function (module) {
                         window.expect(module.isOmeletteModule).toBeTruthy();
                     }
@@ -499,32 +386,12 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             });
 
             // This expectation refers to the Eggs Module
-            window.it(shouldBeRound, {
+            window.it(shouldBeRound, function (module) {
+                window.expect(module.isEggsModule).toBeTruthy();
+            });
+            window.it(shouldBeMoreRound, {
                 expect: function (module) {
                     window.expect(module.isEggsModule).toBeTruthy();
-                }
-            });
-
-        }).execute();
-    });
-
-    asyncTest("Specs defined with Jasq-syntax receive undefined module when enclosed in suite that doesn't define one", 2, function () {
-
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
-
-        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
-            okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
-            start();
-        });
-
-        // A plain suite which includes a jasq-spec
-        window.describe(theOmeletteModule, function () {
-
-            window.it(shouldTasteAmazing, {
-                expect: function (module) {
-                    window.expect(module).toBeUndefined();
                 }
             });
 
