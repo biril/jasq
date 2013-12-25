@@ -142,15 +142,17 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
     QUnit.module("Jasq suites");
 
-    asyncTest("Module is available to specs within the suite (specs defined with Jasmine-syntax)", 2, function () {
+    asyncTest("Module is available to specs within the suite (specs defined with Jasmine-syntax)", 4, function () {
 
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
+        var theOmeletteModule      = "The Omelette Module (suite)",
+            shouldTasteAmazing     = "should taste amazing (spec)",
+            theSaltyOmeletteModule = "The salty Omelette Module (suite)",
+            shouldBeSalty          = "should be salty (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
-            start();
+            // start();
         });
 
         // A Jasq suite which describes the 'Omelette' module
@@ -161,17 +163,38 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             });
 
         }).execute();
+
+        // With alternative describe syntax:
+        suiteWatcher.onCompleted(theSaltyOmeletteModule, function (suite) {
+            okSpec(suite, shouldBeSalty);
+            okSuite(suite, theSaltyOmeletteModule);
+            start();
+        });
+
+        window.describe(theSaltyOmeletteModule, {
+            moduleName: "omelette",
+            specify: function () {
+
+                window.it(shouldBeSalty, function (module) {
+                    window.expect(module.isOmeletteModule).toBeTruthy();
+                });
+
+            }
+
+        }).execute();
     });
 
-    asyncTest("Module is available to specs within the suite (specs defined with Jasq-syntax)", 2, function () {
+    asyncTest("Module is available to specs within the suite (specs defined with Jasq-syntax)", 4, function () {
 
-        var theOmeletteModule = "The Omelette Module",
-            shouldTasteAmazing = "should taste amazing";
+        var theOmeletteModule      = "The Omelette Module (suite)",
+            shouldTasteAmazing     = "should taste amazing (spec)",
+            theSaltyOmeletteModule = "The salty Omelette Module (suite)",
+            shouldBeSalty          = "should be salty (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteAmazing);
             okSuite(suite, theOmeletteModule);
-            start();
+            // start();
         });
 
         // A Jasq suite which describes the 'Omelette' module
@@ -182,6 +205,27 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                     window.expect(module.isOmeletteModule).toBeTruthy();
                 }
             });
+
+        }).execute();
+
+        // With alternative describe syntax:
+        suiteWatcher.onCompleted(theSaltyOmeletteModule, function (suite) {
+            okSpec(suite, shouldBeSalty);
+            okSuite(suite, theSaltyOmeletteModule);
+            start();
+        });
+
+        window.describe(theSaltyOmeletteModule, {
+            moduleName: "omelette",
+            specify: function () {
+
+                window.it(shouldBeSalty, {
+                    expect: function (module) {
+                        window.expect(module.isOmeletteModule).toBeTruthy();
+                    }
+                });
+
+            }
 
         }).execute();
     });
@@ -320,7 +364,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules referenced in nested suites shadow those referenced in outer suites (specs defined with Jasmine-syntax)", 8, function () {
+    asyncTest("Modules associated with nested suites shadow those of outer suites (specs defined with Jasmine-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             shouldBeBoiled     = "should be boiled (spec)",
@@ -387,7 +431,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules referenced in nested suites shadow those referenced in outer suites (specs defined with Jasq-syntax)", 8, function () {
+    asyncTest("Modules associated with nested suites shadow those of outer suites (specs defined with Jasq-syntax)", 8, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             shouldBeBoiled     = "should be boiled (spec)",
@@ -631,7 +675,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("A constructor function may be used to mock object-returning-modules", 2, function () {
+    asyncTest("A module-defining function may be used to mock object-returning-modules", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing";
@@ -661,7 +705,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("A constructor function may be used to mock function-returning-modules", 2, function () {
+    asyncTest("A module-defining function may be used to mock function-returning-modules", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldBeEaten = "should be eaten";
