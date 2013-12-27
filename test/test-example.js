@@ -181,4 +181,102 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
+    //
+    asyncTest("Dependencies may be mocked at the suite level", 4, function () {
+
+        var theModAModule = "The modA module (suite)",
+            shouldExposeModBsValue = "should expose modB's value (spec)",
+            shouldNotCacheModBsValue = "should not cache modB's value (spec)",
+            shouldExposeModBsValueAgain = "should expose modB's value - again (spec)";
+
+        suiteWatcher.onCompleted(theModAModule, function (suite) {
+            okSpec(suite, shouldExposeModBsValueAgain);
+            okSpec(suite, shouldNotCacheModBsValue);
+            okSpec(suite, shouldExposeModBsValue);
+            okSuite(suite, theModAModule);
+            start();
+        });
+
+        window.describe(theModAModule, {
+            moduleName: "modA",
+            mock: function () {
+
+                // Define a mock for ModB
+                return {
+                    modB: {
+                        getValue: function () {
+                            return "C";
+                        }
+                    }
+                };
+            },
+            specify: function () {
+
+                // modA will use the mocked version of modB
+                window.it(shouldExposeModBsValue, function (modA) {
+                    window.expect(modA.getModBValue()).toBe("C"); // Passes
+                });
+
+                // This spec modifies the mocked modB
+                window.it(shouldNotCacheModBsValue, function (modA, dependencies) {
+                    dependencies.modB.getValue = function () {
+                        return "D";
+                    };
+                    window.expect(modA.getModBValue()).toBe("D"); // Passes
+                });
+
+                // modA will use the mocked version of modB, unmodified
+                window.it(shouldExposeModBsValueAgain, function (modA) {
+                    window.expect(modA.getModBValue()).toBe("C"); // Passes
+                });
+            }
+        }).execute();
+    });
+
+    //
+    asyncTest("Mocked dependencies defined on spec override those defined on suite", 2, function () {
+
+        var theModAModule = "The modA module (suite)",
+            shouldExposeModBsValue = "should expose modB's value (spec)";
+
+        suiteWatcher.onCompleted(theModAModule, function (suite) {
+            okSpec(suite, shouldExposeModBsValue);
+            okSuite(suite, theModAModule);
+            start();
+        });
+
+        window.describe(theModAModule, {
+            moduleName: "modA",
+            mock: function () {
+
+                // Define a mock for ModB
+                return {
+                    modB: {
+                        getValue: function () {
+                            return "C";
+                        }
+                    }
+                };
+            },
+            specify: function () {
+
+                // Redefine the modB mock - modA will use the redefined version
+                window.it(shouldExposeModBsValue, {
+                    mock: {
+                        modB: {
+                            getValue: function () {
+                                return "D";
+                            }
+                        }
+                    },
+                    expect: function (modA) {
+                        window.expect(modA.getModBValue()).toBe("D"); // Passes
+                    }
+                });
+
+
+            }
+        }).execute();
+    });
+
 });

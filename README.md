@@ -1,50 +1,71 @@
 Jasq
 ====
 
+[![Bower version](https://badge.fury.io/bo/jasq.png)](http://badge.fury.io/bo/jasq)
+
 [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) dependency injector integrated with
 [Jasmine](https://github.com/pivotal/jasmine).
 
 Jasq simplifies testing AMD modules by overloading Jasmine's `describe` and `it` to
 
-* avoid persistent module state, maintaining spec atomicity
-* allow mocking of the tested module's dependencies per spec
+* maintain spec atomicity, avoiding persistent module state
+* allow mocking of the tested module's dependencies, per suite or per spec
 
 Jasq is built on the assumption that any Jasmine suite will concern (and thus, test / define the
 specs for) nothing more than a single module. The Jasq version of `describe` allows specifying the
-tested module (by name) and ensures that it is made available to all contained specs. In turn,
-specs defined with the Jasq version of `it` gain access to the tested module (through a `module`
-argument) and may easily provide ad-hock mocks for any and all of its dependencies. The tested
-module is reloaded per spec and uses any mocked dependencies defined.
+tested module (by name) and ensures that it is made available to all contained specs, defined with
+`it`. These gain access to the tested module (through a `module` argument) and may easily provide
+ad-hock mocks for any and all of its dependencies. The tested module is reloaded per spec and uses
+any mocked dependencies defined. Mocks may also be defined at the suite level, to be reused for all
+contained specs.
 
-Jasq defines `describe` and `it` as overloaded versions of Jasmine's 'native' functions which
-differ in the parameters they accept. Using Jasq will _not_ shadow Jasmine's natives - they
-may be invoked (bypassing Jasq functionality) by use of appropriate arguments:
+To implement dependency injection, Jasq wraps Jasmine's `describe` &amp; `it` global functions and
+additionally provides overloaded versions which differ in the parameters they accept. These act as
+extentions to Jasmine's built in functionality to be used as (and if) needed:
 
 ```javascript
-// Invoke Jasmine 'descibe'
+// Invoke 'describe' - do not associate a module which the suite
 describe("My suite", function () {
 	// .. Jasmine specs ..
 });
 
-// Invoke Jasq 'describe'
+// Invoke 'describe' passing a moduleName argument to associate the suite
+//  with the module. Contained specs gain access to the module
 describe("My suite", "tested/module/name", function () {
-	// .. Jasq & Jasmine specs ..
+	// .. specs ..
 });
 
-// Invoke Jasmine 'it'
+// Invoke 'describe' passing a suiteConfig hash as a second argument. Allows
+//  specifying mocks through suiteConfig.mock
+describe("My suite", {
+	moduleName: "tested/module/name",
+	mock: function () {
+		// Return a hash of mocked dependencies
+	},
+	specify: function () {
+		// .. specs ..
+	}
+});
+
+// Invoke 'it'
 it("should do something", function () {
 	// .. expectations ..
 });
 
-// Invoke Jasq 'it'
+// Invoke 'it' expecting a module. Specs defined within a suite associated
+//  with a module will receive one. Additionally they will receive the
+//  module's dependecies
+it("should do something", function (module, dependencies) {
+	// .. expectations ..
+});
+
+// Invoke 'it' passing a specConfig hash as a second argument. Allows
+//  specifying mocks through specConfig.mock
 it("should do something", {
-	store: [
-		// Define stored dependencies
-	],
 	mock: {
 		// Define mocked dependencies
 	},
-	expect: function (testedModule, dependencies) {
+	expect: function (module, dependencies) {
 		// .. expectations ..
 	})
 };
@@ -91,8 +112,7 @@ define(["jasq"], function () {
 });
 ```
 
-Define the test suite by invoking the Jasq-version of `describe`. This accepts the module name
-as an additional parameter:
+Define the test suite by invoking `describe`, passing the module name as an additional parameter:
 
 ```javascript
 require(["jasq"], function () {
@@ -157,10 +177,10 @@ require(["jasq"], function () {
 });
 ```
 
-To mock `modA`'s dependencies use the Jasq-version of `it` which accepts a `specConfig` hash in
-place of the expectations function. Use the `specConfig.mock` property to define a mapping of
-dependencies (module names) to mocks, as you see fit. Pass the expectations function through the
-`specConfig.expect` property. In the following example, `modB` is mapped to a `mockB` object:
+To mock `modA`'s dependencies, invoke `it` passing a `specConfig` hash as a second argument. Use
+the `specConfig.mock` property to define a mapping of dependencies (module names) to mocks, as you
+see fit. Pass the expectations function through the `specConfig.expect` property. In the following
+example, `modB` is mapped to a `mockB` object:
 
 ```javascript
 require(["jasq"], function () {
@@ -209,8 +229,8 @@ require(["jasq"], function () {
 });
 ```
 
-In certain cases it may be useful to access a dependency without necessarily creating a mock
-beforehand. The `dependencies` hash may be used to access any dependency, mocked or not:
+Often, it may be useful to access a dependency without necessarily creating a mock beforehand. The
+`dependencies` hash may be used to access any dependency, mocked or not:
 
 ```javascript
 require(["jasq"], function () {
@@ -227,6 +247,93 @@ require(["jasq"], function () {
 });
 ```
 
+In cases where multiple specs make use of the very same mocks, you can avoid repeating their
+definitions _per spec_ by providing a 'mocking function' at the suite level. The mocking function
+should instantiate all needed mocks and return a hash that maps them to dependencies (module
+names). This will make the mocks available to all specs defined within the suite. Note that the
+mocking function will be invoked - and the mocks will be re-instatiated - _per spec_.
+
+To do this, `describe` should be invoked with a `suiteConfig` hash as a second argument. Use the
+`suiteConfig.mock` property to pass the mocking function. Assign the name of the tested module to
+`suiteConfig.moduleName` and the specs function to `suiteConfig.specify`:
+
+```javascript
+require(["jasq"], function () {
+	describe("The modA module", {
+		moduleName: "modA",
+		mock: function () {
+
+			// Define a mock for modB
+			return {
+				modB: {
+					getValue: function () {
+						return "C";
+					}
+				}
+			};
+		},
+		specify: function () {
+
+			// modA will use the mocked version of modB
+			it("should expose modB's value", function (modA) {
+				expect(modA.getModBValue()).toBe("C"); // Passes
+			});
+
+			// This spec modifies the mocked modB
+			it("should not cache modB's value", function (modA, dependencies) {
+				dependencies.modB.getValue = function () {
+					return "D";
+				};
+				expect(modA.getModBValue()).toBe("D"); // Passes
+			});
+
+			// modA will use the mocked version of modB, unmodified
+			window.it("should expose modB's value - again", function (modA) {
+				window.expect(modA.getModBValue()).toBe("C"); // Passes
+			});
+		}
+	});
+});
+```
+
+Note that mocks defined at the suite level will be overriden by those defined in specs:
+
+```javascript
+require(["jasq"], function () {
+	describe("The modA module", {
+		moduleName: "modA",
+		mock: function () {
+
+			// Define a mock for modB
+			return {
+				modB: {
+					getValue: function () {
+						return "C";
+					}
+				}
+			};
+		},
+		specify: function () {
+
+			// Redefine the modB mock - modA will use the redefined version
+			it("should expose modB's value", {
+				mock: {
+					modB: {
+						getValue: function () {
+							return "D";
+						}
+					}
+				},
+				expect: function (modA) {
+					expect(modA.getModBValue()).toBe("D"); // Passes
+				}
+			});
+		}
+	});
+});
+```
+
+
 Set up
 ------
 
@@ -238,11 +345,11 @@ off a test suite would be
 ```html
 <html>
 <head>
-    <title>Example Test Suite</title>
-    <link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
-    <script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
-    <script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
-    <script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
+	<title>Example Test Suite</title>
+	<link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
+	<script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
+	<script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
+	<script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
 </head>
 
 <body>
@@ -255,31 +362,25 @@ with an accompanying `main.js`:
 ```javascript
 // Configure require
 require.config({
-    baseUrl: "base/path/to/tested/modules",
-    paths: {
-        jasq: "path/to/jasq"
-    }
+	baseUrl: "base/path/to/tested/modules",
+	paths: {
+		jasq: "path/to/jasq"
+	}
 });
 
 // Configure Jasmine
 var jasmineEnv = jasmine.getEnv(),
-    htmlReporter = new jasmine.HtmlReporter();
+	htmlReporter = new jasmine.HtmlReporter();
 jasmineEnv.addReporter(htmlReporter);
 jasmineEnv.specFilter = function (spec) {
-    return htmlReporter.specFilter(spec);
+	return htmlReporter.specFilter(spec);
 };
 
 // Require the spec and run suite once loaded
 require(["path/to/spec"], function () {
-    jasmineEnv.execute();
+	jasmineEnv.execute();
 });
 ```
-
-
-Reference
----------
-
-_..._
 
 
 License
