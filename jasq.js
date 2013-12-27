@@ -214,8 +214,8 @@ define(function () {
                 // Configuration of current suite (name of module to load & mock function, if any)
                 suiteConfig = suiteConfigs.get(containingSuitePath),
 
-                // This Jasmine spec is async (due to the async `.load` call it includes) so it'll
-                //  have to wait for `isSpecTested` to turn true
+                // The enclosing Jasmine spec will be async (due to the async `.load` call below)
+                //  so it'll have to wait for `isSpecTested` to turn true
                 isSpecTested = false;
 
             // Re-define modules using given mocks (if any), before they're loaded
@@ -232,6 +232,9 @@ define(function () {
 
                 isSpecTested = true;
             });
+
+            // Return a function for the enclosing spec to wait for
+            return function () { return isSpecTested; };
         },
 
         // Get the jasq version of Jasmine's `(x)describe`
@@ -326,7 +329,7 @@ define(function () {
 
                 // Execute Jasmine's `(x)it` on an appropriately modified _asynchronous_ spec
                 jasmineIt(specDescription, function () {
-                    executeSpec(currentSuitePath, specDescription, specConfig);
+                    window.waitsFor(executeSpec(currentSuitePath, specDescription, specConfig));
                 });
             };
         },
