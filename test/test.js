@@ -429,7 +429,36 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked (and only mocked) dependencies are injected into tested module", 2, function () {
+    asyncTest("Mocked (and only mocked) dependencies are injected into tested module (mocks defined on suite)", 2, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldTasteAmazing = "should taste amazing";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteAmazing);
+            okSuite(suite, theOmeletteModule);
+            start();
+        });
+
+        // A Jasq suite which describes the 'Omelette' module
+        window.describe(theOmeletteModule, {
+            moduleName: "omelette",
+            mock: function () {
+                return {
+                    eggs: { isMocked: true }
+                };
+            },
+            specify: function () {
+                window.it(shouldTasteAmazing, function (module) {
+                    window.expect(module.getEggs().isMocked).toBeTruthy(); // Mocked Eggs Module is injected into tested Module
+                    window.expect(module.getBacon().isMocked).toBeFalsy(); // Tested Module uses original (non-mocked) Bacon dependency
+                });
+            }
+
+        }).execute();
+    });
+
+    asyncTest("Mocked (and only mocked) dependencies are injected into tested module (mocks defined on spec)", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing";
@@ -456,7 +485,40 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies may be accessed through `dependencies`", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on suite)", 1, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldTasteAmazing = "should taste amazing";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteAmazing);
+            start();
+        });
+
+        // A Jasq suite which describes the 'Omelette' module
+        window.describe(theOmeletteModule, {
+            moduleName: "omelette",
+            mock: function () {
+                return {
+                    eggs: { isMocked: true },
+                    bacon: { isMocked: true }
+                };
+            },
+            specify: function () {
+                window.it(shouldTasteAmazing, function (module, deps) {
+                    window.expect(deps.eggs).toBeTruthy();           // Eggs Module is available as a dependency
+                    window.expect(deps.eggs.isMocked).toBeTruthy();  // Eggs Module is mocked
+                    window.expect(deps.eggs).toBe(module.getEggs()); // Eggs Module is also injected into tested Module
+                    window.expect(deps.bacon).toBeTruthy();            // Bacon Module is available as a dependency
+                    window.expect(deps.bacon.isMocked).toBeTruthy();   // Bacon Module is mocked
+                    window.expect(deps.bacon).toBe(module.getBacon()); // Bacon Module is also injected into tested Module
+                });
+            }
+
+        }).execute();
+    });
+
+    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on spec)", 2, function () {
 
         var theOmeletteModule = "The Omelette Module",
             shouldTasteAmazing = "should taste amazing",
@@ -496,6 +558,46 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                     window.expect(deps.bacon).toBe(module.getBacon()); // Bacon Module is also injected into tested Module
                 }
             });
+
+        }).execute();
+    });
+
+    asyncTest("Mocked dependencies defined on spec override those defined on suite", 1, function () {
+
+        var theOmeletteModule = "The Omelette Module",
+            shouldTasteAmazing = "should taste amazing";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteAmazing);
+            start();
+        });
+
+        // A Jasq suite which describes the 'Omelette' module
+        window.describe(theOmeletteModule, {
+            moduleName: "omelette",
+            mock: function () {
+                return {
+                    eggs: {
+                        isMocked: true,
+                        isDefinedOnSuite: true
+                    },
+                    bacon: {
+                        isMocked: true,
+                        isDefinedOnSuite: true
+                    }
+                };
+            },
+            specify: function () {
+                window.it(shouldTasteAmazing, {
+                    mock: {
+                        eggs: { isDefinedOnSuite: false }
+                    },
+                    expect: function (module, deps) {
+                        window.expect(deps.eggs.isDefinedOnSuite).toBe(false);
+                        window.expect(deps.bacon.isDefinedOnSuite).toBe(true);
+                    }
+                });
+            }
 
         }).execute();
     });

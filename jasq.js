@@ -38,10 +38,12 @@ define(function () {
                 if (obj.hasOwnProperty(key)) { iterator(obj[key], key, obj); }
             }
         },
-        clone = function (obj) {
-            var clone = {};
-            each(obj, function (v, k) { clone[k] = v; });
-            return clone;
+        extend = function () {
+            var target = {};
+            each(arguments, function (source) {
+                each(source, function (v, k) { target[k] = v; });
+            });
+            return target;
         },
 
         // Generate a context-id for given `suiteDescription` / `specDescription` pair
@@ -212,23 +214,26 @@ define(function () {
                 load = configRequireForContext(contextId),
 
                 // Configuration of current suite (name of module to load & mock function, if any)
-                suiteConfig = suiteConfigs.get(containingSuitePath),
+                suiteConfig = suiteConfigs.get(containingSuitePath) || {},
 
                 // The enclosing Jasmine spec will be async (due to the async `.load` call below)
                 //  so it'll have to wait for `isSpecTested` to turn true
-                isSpecTested = false;
+                isSpecTested = false,
+
+                //
+                mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
 
             // Re-define modules using given mocks (if any), before they're loaded
-            each(specConfig.mock, function (mod, modName) { define(modName, mod); });
+            each(mock, function (mod, modName) { define(modName, mod); });
 
             // And require the tested module
-            load(suiteConfig ? [suiteConfig.moduleName] : [], function (module) {
+            load(suiteConfig.moduleName ? [suiteConfig.moduleName] : [], function (module) {
 
                 // After module & deps are loaded, just run the original spec. Dependencies
                 //  (mocked and non-mocked) should be available through the `dependencies` hash.
-                //  (Note that a dependencies 'clone' is passed to avoid exposing the original
-                //  hash that require maintains)
-                specConfig.expect(module, clone(require.s.contexts[contextId].defined));
+                //  (Note that a (shallow) copy of dependencies is passed to avoid exposing the
+                //  original hash that require maintains)
+                specConfig.expect(module, extend(require.s.contexts[contextId].defined));
 
                 isSpecTested = true;
             });
