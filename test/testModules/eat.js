@@ -5,7 +5,7 @@ define(function () {
     "use strict";
 
     var f = function () {};
-    f.isEatModule = true;
+    f.isEat = true;
     f.isMocked = false;
 
     return f;

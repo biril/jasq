@@ -18,6 +18,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     ////////////////////////////////////
     ////////////////////////////////////
 
+    // How jasq behaves when Jasmine not loaded
     QUnit.module("Environment (Jasmine not loaded)");
 
     //
@@ -49,6 +50,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     ////////////////////////////////////
     ////////////////////////////////////
 
+    // How jasq and its globals should be exported when loaded after Jasmine
     QUnit.module("Environment (Jasmine loaded)");
 
     //

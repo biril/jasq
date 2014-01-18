@@ -4,7 +4,7 @@
 define(function () {
     "use strict";
     return {
-        isEggsModule: true,
+        isEggs: true,
         isMocked: false
     };
 });

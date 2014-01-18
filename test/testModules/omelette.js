@@ -5,7 +5,7 @@ define(["eggs", "bacon", "eat"], function (eggs, bacon, eat) {
     "use strict";
 
     return {
-        isOmeletteModule: true,
+        isOmelette: true,
         isMocked: false,
 
         getEggs: function () { return eggs; },

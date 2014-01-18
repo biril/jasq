@@ -4,7 +4,7 @@
 define(function () {
     "use strict";
     return {
-        isBaconModule: true,
+        isBacon: true,
         isMocked: false
     };
 });

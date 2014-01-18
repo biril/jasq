@@ -14,6 +14,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     ////////////////////////////////////
     ////////////////////////////////////
 
+    // Validate the examples in README
     QUnit.module("Example");
 
     //
