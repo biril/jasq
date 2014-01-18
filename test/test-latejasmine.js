@@ -21,7 +21,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // How jasq behaves when Jasmine not loaded
     QUnit.module("Environment (Jasmine not loaded)");
 
-    //
     test("jasmine globals (" + globalMethodNames.join(", ") + ") are not available", 4, function () {
         if (window.jasmine) { throw "This test requires that Jasmine hasn't loaded"; }
 
@@ -30,7 +29,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         });
     });
 
-    //
     test("no jasmine globals (" + globalMethodNames.join(", ") + ") are exposed on jasq", 4, function () {
         if (window.jasmine) { throw "This test requires that Jasmine hasn't loaded"; }
 
@@ -39,7 +37,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         });
     });
 
-    //
     test("attempting to apply/reset globals throws", 2, function () {
         if (window.jasmine) { throw "This test requires that Jasmine hasn't loaded"; }
 
@@ -53,7 +50,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // How jasq and its globals should be exported when loaded after Jasmine
     QUnit.module("Environment (Jasmine loaded)");
 
-    //
     asyncTest("applying will expose the jasq-version of Jasmine globals (globally and on jasq)", 12, function () {
         whenJasmineLoaded(function () {
             jasq.applyGlobals();
@@ -68,7 +64,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         });
     });
 
-    //
     asyncTest("globals may be reset and re-applied", 16, function () {
         whenJasmineLoaded(function () {
             jasq.applyGlobals();
