@@ -55,9 +55,10 @@ define(function () {
         }()),
 
         // Re-configure require for context of given id, getting a loader-function. All requirejs
-        // options (except for the context itself) are copied over from the default context `_`
+        // [configuration options](http://requirejs.org/docs/api.html#config), except for the
+        // context itself, are copied over from the default context `_`
         configRequireForContext = function (contextId) {
-            var c = {}, _require = null;
+            var c = {};
             each(require.s.contexts._.config, function (val, key) {
                 if (key !== "deps") { c[key] = val; }
             });
@@ -204,23 +205,23 @@ define(function () {
         },
 
         // Execute spec given path of suite it belongs to, description and configuration
-        executeSpec = function (containingSuitePath, specDescription, specConfig) {
+        executeSpec = function (suitePath, specDescription, specConfig) {
 
             var
-                // Mods will be loaded inside a new requirejs context. This is its id
-                contextId = createContextId(containingSuitePath, specDescription),
+                // Mods will load in a new requirejs context, specific to this spec. This is its id
+                contextId = createContextId(suitePath, specDescription),
 
-                // Configure require for created context, getting an appropriate loader
+                // Create the context, configuring require appropriately and obtaining a loader
                 load = configRequireForContext(contextId),
 
                 // Configuration of current suite (name of module to load & mock function, if any)
-                suiteConfig = suiteConfigs.get(containingSuitePath) || {},
+                suiteConfig = suiteConfigs.get(suitePath) || {},
 
                 // The enclosing Jasmine spec will be async (due to the async `.load` call below)
                 //  so it'll have to wait for `isSpecTested` to turn true
                 isSpecTested = false,
 
-                //
+                // Modules to mock, as specified at the suite level as well as the spec level
                 mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
 
             // Re-define modules using given mocks (if any), before they're loaded
@@ -229,10 +230,10 @@ define(function () {
             // And require the tested module
             load(suiteConfig.moduleName ? [suiteConfig.moduleName] : [], function (module) {
 
-                // After module & deps are loaded, just run the original spec. Dependencies
-                //  (mocked and non-mocked) should be available through the `dependencies` hash.
-                //  (Note that a (shallow) copy of dependencies is passed to avoid exposing the
-                //  original hash that require maintains)
+                // After module & deps are loaded, just run the original spec's expectations.
+                //  Dependencies (mocked and non-mocked) should be available through the
+                //  `dependencies` hash. (Note that a (shallow) copy of dependencies is passed, to
+                //  avoid exposing the original hash that require maintains)
                 specConfig.expect(module, extend(require.s.contexts[contextId].defined));
 
                 isSpecTested = true;

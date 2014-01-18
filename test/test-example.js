@@ -17,7 +17,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // Validate the examples in README
     QUnit.module("Example");
 
-    //
     asyncTest("`modA` is available to specs within the suite", 2, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -38,7 +37,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("`modA` is available to specs within nested suites", 3, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -66,7 +64,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("`modA`'s state is not persisted across specs", 3, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -97,7 +94,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("`modA`'s dependencies may be mocked", 2, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -130,7 +126,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Mocked dependencies may be accessed through `dependencies`", 2, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -159,7 +154,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 2, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -182,7 +176,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Dependencies may be mocked at the suite level", 4, function () {
 
         var theModAModule = "The modA module (suite)",
@@ -234,7 +227,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    //
     asyncTest("Mocked dependencies defined on spec override those defined on suite", 2, function () {
 
         var theModAModule = "The modA module (suite)",
