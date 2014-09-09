@@ -86,9 +86,9 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             shouldDoSomething = "should do something (spec)";
 
         suiteWatcher.onCompleted(theThing, function (suite) {
-             okSpec(suite, shouldDoSomething);
-             okSuite(suite, theThing);
-             start();
+            okSpec(suite, shouldDoSomething);
+            okSuite(suite, theThing);
+            start();
         });
 
         // A plain Jasmine suite which describes 'The thing'
