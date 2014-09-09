@@ -95,6 +95,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         window.describe(theThing, function () {
             window.it(shouldDoSomething, function () {
                 // .. expectations ..
+                window.expect(true).toBeTruthy();
             });
         }).execute();
     });
@@ -116,6 +117,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         window.describe(theThing, function () {
             window.it(shouldDoSomething, function () {
                 // .. expectations ..
+                window.expect(true).toBeTruthy();
             });
             window.xit("should do something else", function () {
                 // .. expectations ..
