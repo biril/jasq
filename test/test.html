@@ -11,6 +11,10 @@
     <div id="qunit-fixture"></div>
 
     <script type="text/javascript" src="./vendor/qunit.js"></script>
+    <script type="text/javascript">
+        // No way around this. See https://github.com/jquery/qunit/issues/396 and testrunner.js
+        QUnit.config.autostart = false;
+    </script>
     <script type="text/javascript" src="./vendor/jasmine/2.0.2/jasmine.js"></script>
     <script type="text/javascript" data-main="testrunner.js" src="./vendor/require.js"></script>
 </body>
