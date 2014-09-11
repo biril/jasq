@@ -45,6 +45,11 @@ define(function () {
             });
             return target;
         },
+        cloneArray = function (array) {
+            var clone = [];
+            each(array, function (element) { clone.push(element); });
+            return clone;
+        },
 
         // Generate a context-id for given `suiteDescription` / `specDescription` pair
         createContextId = (function () {
@@ -89,14 +94,6 @@ define(function () {
             return null;
         },
 
-        // Check if given `it` / `xit` args are such that should be handled by jasq `it` / `xit`
-        //  instead of Jasmine's native versions. This would be the case if the arguments are
-        //   * 1. spec description (string)
-        //   * 2. spec config (hash)
-        isArgsForJasqIt = function (args) {
-            return isString(args[0]) && isStrictlyObject(args[1]);
-        },
-
         // Get the 'path' of given suite. A suite's path is defined as an array of suite
         //  descriptions where
         //  * `path[0]`: descr. of the top-level suite == (n-1)th parent of current suite
@@ -110,6 +107,12 @@ define(function () {
             }
             return suitePath;
         },
+
+        // Path of the suite that is currently being defined
+        curDefSuitePath = [],
+
+        // Path of the suite that is currently executing
+        curExecSuitePath = [],
 
         // A collection of test-suite configurations. A configuration is uniquely identified by the
         //  path of the suite it refers to and includes the (name of the) module under test and
@@ -149,7 +152,7 @@ define(function () {
                         },
                         onNotFound: function () {
                             configs.push({
-                                suitePath: suitePath,
+                                suitePath: cloneArray(suitePath),
                                 moduleName: moduleName,
                                 mock: mock
                             });
@@ -175,7 +178,9 @@ define(function () {
                             return configs[i];
                         });
 
-                        if (found) { return found; }
+                        if (found) {
+                            return found;
+                        }
 
                         suitePath.pop();
                     }
@@ -204,43 +209,46 @@ define(function () {
             return window.jasmine && isFunction(window.jasmine.getEnv);
         },
 
-        // Execute spec given path of suite it belongs to, description and configuration
-        executeSpec = function (suitePath, specDescription, specConfig) {
+        // Create a function to execute the spec of given `specDescription` and `specConfig` after
+        //  (re)loading the tested module and mocking its dependencies as specified at the
+        //  (current) suite and (given) spec level
+        createSpec = function (specDescription, specConfig) {
 
-            var
-                // Mods will load in a new requirejs context, specific to this spec. This is its id
-                contextId = createContextId(suitePath, specDescription),
+            var contextId, load, suiteConfig, mock;
 
-                // Create the context, configuring require appropriately and obtaining a loader
-                load = configRequireForContext(contextId),
+            // Mods will load in a new requirejs context, specific to this spec. This is its id
+            contextId = createContextId(curDefSuitePath, specDescription);
 
-                // Configuration of current suite (name of module to load & mock function, if any)
-                suiteConfig = suiteConfigs.get(suitePath) || {},
+            // Create the context, configuring require appropriately and obtaining a loader
+            load = configRequireForContext(contextId);
 
-                // The enclosing Jasmine spec will be async (due to the async `.load` call below)
-                //  so it'll have to wait for `isSpecTested` to turn true
-                isSpecTested = false,
+            // Configuration of current suite (name of module to load & mock function, if any)
+            suiteConfig = suiteConfigs.get(curDefSuitePath) || {};
 
-                // Modules to mock, as specified at the suite level as well as the spec level
-                mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
+            // Modules to mock, as specified at the suite level as well as the spec level
+            mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
 
-            // Re-define modules using given mocks (if any), before they're loaded
-            each(mock, function (mod, modName) { define(modName, mod); });
+            return function (done) {
+                // Re-define modules using given mocks (if any), before they're loaded
+                each(mock, function (mod, modName) { define(modName, mod); });
 
-            // And require the tested module
-            load(suiteConfig.moduleName ? [suiteConfig.moduleName] : [], function (module) {
+                // And require the tested module
+                load(suiteConfig.moduleName ? [suiteConfig.moduleName] : [], function (module) {
 
-                // After module & deps are loaded, just run the original spec's expectations.
-                //  Dependencies (mocked and non-mocked) should be available through the
-                //  `dependencies` hash. (Note that a (shallow) copy of dependencies is passed, to
-                //  avoid exposing the original hash that require maintains)
-                specConfig.expect(module, extend(require.s.contexts[contextId].defined));
+                    // After module & deps are loaded, just run the original spec's expectations.
+                    //  Dependencies (mocked and non-mocked) should be available through the
+                    //  `dependencies` hash. (Note that a (shallow) copy of dependencies is passed, to
+                    //  avoid exposing the original hash that require maintains)
+                    specConfig.expect(module, extend(require.s.contexts[contextId].defined), done);
 
-                isSpecTested = true;
-            });
-
-            // Return a function for the enclosing spec to wait for
-            return function () { return isSpecTested; };
+                    // In the event that the expectation-function is _not_ meant to complete
+                    //  asynchronously (<=> the expectation-function did _not_ 'request' a `done`
+                    //  argument) then it's already completed. Invoke `done`
+                    if (specConfig.expect.length < 3) {
+                        done();
+                    }
+                });
+            };
         },
 
         // Get the jasq version of Jasmine's `(x)describe`
@@ -260,14 +268,15 @@ define(function () {
             //      * `specify`: The function to execute the suite's specs
             return function (suiteDescription) {
 
-                var
-                    // Parse given arguments as if they were suitable for the jasq-version of
-                    //  `describe`. `args` will be null if they're not, otherwise it will contain
-                    //  the expected `moduleName`, `mock` and `specify` properties
-                    args = parseArgsForJasqDescribe(arguments),
+                var args, suitePath, ret;
 
-                    // Path of current suite. To be set later on, if needed
-                    suitePath = null;
+                // Parse given arguments as if they were suitable for the jasq-version of
+                //  `describe`. `args` will be null if they're not, otherwise it will contain
+                //  the expected `moduleName`, `mock` and `specify` properties
+                args = parseArgsForJasqDescribe(arguments);
+
+                // Path of current suite. To be set later on, if needed
+                suitePath = null;
 
                 // If given arguments are not appropriate for the jasq version of `(x)describe`
                 //  then just run the native Jasmine version
@@ -287,14 +296,19 @@ define(function () {
                 //  suite instance for the latter does not yet exist so we'll have to build the
                 //  path by concatenating this new suite's description with the parent suite's
                 //  path (if there is one)
+                curDefSuitePath.push(suiteDescription);
+
                 if (!isX) {
-                    suitePath = getSuitePath(jasmineEnv.currentSuite).concat(suiteDescription);
-                    suiteConfigs.add(suitePath, args.moduleName, args.mock);
+                    // suitePath = getSuitePath(jasmineEnv.currentSuite).concat(suiteDescription);
+                    // suiteConfigs.add(suitePath, args.moduleName, args.mock);
+                    suiteConfigs.add(curDefSuitePath, args.moduleName, args.mock);
                 }
 
                 // Ultimately, the native Jasmine version is run. The crucial step was creating
                 //  the mapping above, for later use in `it`-specs
-                return jasmineDescribe(suiteDescription, args.specify);
+                ret = jasmineDescribe(suiteDescription, args.specify);
+                curDefSuitePath.pop();
+                return ret;
             };
         },
 
@@ -314,29 +328,29 @@ define(function () {
             //          `module` and `dependencies` arguments
             return function (specDescription, specConfig) {
 
-                var currentSuitePath = getSuitePath(jasmineEnv.currentSuite);
+                // In the event that there's no mapped module to pass to the spec the just run the
+                //  native Jasmine version - this will avoid forcing spec to run asynchronously.
+                //  Also run the native version in the case the the caller invoked `xit` - the spec
+                //  will not execute so there's no reason to incur the module (re)loading overhead
+                if (!suiteConfigs.get(curDefSuitePath) || isX) {
 
-                // If given arguments are not appropriate for the jasq-version of `(x)it` ..
-                if (!isArgsForJasqIt(arguments)) {
-
-                    //  .. _and_ there's no mapped module to pass to the spec then just run
-                    //  the native Jasmine version. Also run the native version in the case
-                    //  that the caller invoked `xit` (the spec will not execute so there's
-                    //  no reason to incur the module (re)loading overhead) ..
-                    if (!suiteConfigs.get(currentSuitePath) || isX) {
-                        return jasmineIt.apply(null, arguments);
+                    // We tolerate the caller passing an expectation-hash into a spec which is not
+                    //  part of a jasq-suite - we just keep the expectation function and ignore
+                    //  everything else
+                    if (isStrictlyObject(specConfig)) {
+                        specConfig = specConfig.expect;
                     }
 
-                    // .. but if there _is_ a mapped module then it should be passed into the
-                    //  spec. To do that, an ad-hoc `specConfig` is created and we continue as
-                    //  if the caller explicitly invoked the jasq-version of `(x)it`
+                    return jasmineIt.call(null, specDescription, specConfig);
+                }
+
+                // Create a specConfig, in case the caller passed an expectation-function instead
+                if (!isStrictlyObject(specConfig)) {
                     specConfig = { expect: specConfig };
                 }
 
                 // Execute Jasmine's `(x)it` on an appropriately modified _asynchronous_ spec
-                jasmineIt(specDescription, function () {
-                    window.waitsFor(executeSpec(currentSuitePath, specDescription, specConfig));
-                });
+                return jasmineIt(specDescription, createSpec(specDescription, specConfig));
             };
         },
 
@@ -364,11 +378,16 @@ define(function () {
             //  relevant config, if one is found. Besides keeping the collection from growing
             //  indefinitely, this also allows definining multiple suites with the same path
             jasmineEnv.addReporter((function () {
-                var SuiteConfigSweeper = function () {};
-                SuiteConfigSweeper.prototype = new window.jasmine.Reporter();
-                SuiteConfigSweeper.prototype.reportSuiteResults = function (suite) {
-                    suiteConfigs.remove(getSuitePath(suite));
-                };
+                var SuiteConfigSweeper = function () {
+                        this.suiteStarted = function (suite) {
+                            curExecSuitePath.push(suite.description);
+                        };
+                        this.suiteDone = function (suite) {
+                            // curExecSuitePath[curExecSuitePath.length - 1] === suite.description)
+                            suiteConfigs.remove(curExecSuitePath);
+                            curExecSuitePath.pop();
+                        };
+                    };
                 return new SuiteConfigSweeper();
             }()));
 

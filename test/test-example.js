@@ -17,14 +17,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // Validate the examples in README
     QUnit.module("Example");
 
-    asyncTest("`modA` is available to specs within the suite", 2, function () {
+    asyncTest("`modA` is available to specs within the suite", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldHaveAValueOfA = "should have a value of 'A' (spec)";
 
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldHaveAValueOfA);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -37,18 +36,16 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("`modA` is available to specs within nested suites", 3, function () {
+    asyncTest("`modA` is available to specs within nested suites", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             itsValue = "its value (nested suite)",
             shouldBeA = "should be 'A' (spec)";
 
-        suiteWatcher.onCompleted(itsValue, function (suite) {
+        suiteWatcher.onCompleted([theModAModule, itsValue], function (suite) {
             okSpec(suite, shouldBeA);
-            okSuite(suite, itsValue);
         });
         suiteWatcher.onCompleted(theModAModule, function (suite) {
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -64,7 +61,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("`modA`'s state is not persisted across specs", 3, function () {
+    asyncTest("`modA`'s state is not persisted across specs", 2, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldHaveAValueOfAWhenTweaked = "should have a value of 'C' when tweaked (spec)",
@@ -73,7 +70,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldHaveAValueOfA);
             okSpec(suite, shouldHaveAValueOfAWhenTweaked);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -94,14 +90,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("`modA`'s dependencies may be mocked", 2, function () {
+    asyncTest("`modA`'s dependencies may be mocked", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldExposeModBsValue = "should expose modB's value (spec)";
 
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -126,14 +121,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies may be accessed through `dependencies`", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies`", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldExposeModBsValue = "should expose modB's value (spec)";
 
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -154,14 +148,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 2, function () {
+    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldDelegateToModB = "should delegate to modB to expose modB's value (spec)";
 
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldDelegateToModB);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -176,7 +169,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Dependencies may be mocked at the suite level", 4, function () {
+    asyncTest("Dependencies may be mocked at the suite level", 3, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldExposeModBsValue = "should expose modB's value (spec)",
@@ -187,7 +180,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             okSpec(suite, shouldExposeModBsValueAgain);
             okSpec(suite, shouldNotCacheModBsValue);
             okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -227,14 +219,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies defined on spec override those defined on suite", 2, function () {
+    asyncTest("Mocked dependencies defined on spec override those defined on suite", 1, function () {
 
         var theModAModule = "The modA module (suite)",
             shouldExposeModBsValue = "should expose modB's value (spec)";
 
         suiteWatcher.onCompleted(theModAModule, function (suite) {
             okSpec(suite, shouldExposeModBsValue);
-            okSuite(suite, theModAModule);
             start();
         });
 
@@ -266,8 +257,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
                         window.expect(modA.getModBValue()).toBe("D"); // Passes
                     }
                 });
-
-
             }
         }).execute();
     });

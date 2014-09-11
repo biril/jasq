@@ -80,14 +80,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // Behaviour of spec-suites that are not associated with Modules
     QUnit.module("Suites without Mod");
 
-    asyncTest("Suites execute", 2, function () {
+    asyncTest("Suites execute", 1, function () {
 
         var theThing = "The thing (suite)",
             shouldDoSomething = "should do something (spec)";
 
         suiteWatcher.onCompleted(theThing, function (suite) {
             okSpec(suite, shouldDoSomething);
-            okSuite(suite, theThing);
             start();
         });
 
@@ -100,7 +99,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Specs may be disabled", 3, function () {
+    asyncTest("Specs may be disabled", 2, function () {
 
         var theThing = "The thing (suite)",
             shouldDoSomething = "should do something (spec)",
@@ -109,7 +108,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         suiteWatcher.onCompleted(theThing, function (suite) {
             ok(!isSecondSpecExecuted, 'disabled spec (xit) did not execute');
             okSpec(suite, shouldDoSomething);
-            okSuite(suite, theThing);
             start();
         });
 
@@ -133,8 +131,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
         // A plain Jasmine suite which describes 'The thing'
         window.xdescribe(theThing, function () {
-            // .. specs ..
-            isSuiteExecuted = true;
+            window.it('should explode (spec)', function () {
+                isSuiteExecuted = true;
+            });
+
         }).execute();
 
         // Give it a sec - expect the suite not to have run
@@ -144,7 +144,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }, 300);
     });
 
-    asyncTest("Specs receive undefined module when enclosed in suite that doesn't define one", 3, function () {
+    asyncTest("Specs receive no arguments when enclosed in suite that doesn't define a module", 2, function () {
 
         var theOmeletteModule      = "The Omelette Module (suite)",
             shouldTasteAmazing     = "should taste amazing (spec)",
@@ -153,20 +153,49 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldTasteMoreAmazing);
             okSpec(suite, shouldTasteAmazing);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
         // A plain suite which includes a jasq-spec
         window.describe(theOmeletteModule, function () {
 
-            window.it(shouldTasteAmazing, function (module) {
-                window.expect(module).toBeUndefined();
+            window.it(shouldTasteAmazing, function () {
+                window.expect(arguments[0]).toBeUndefined();
             });
 
             window.it(shouldTasteMoreAmazing, {
-                expect: function (module) {
-                    window.expect(module).toBeUndefined();
+                expect: function () {
+                    window.expect(arguments[0]).toBeUndefined();
+                }
+            });
+
+        }).execute();
+    });
+
+    asyncTest("Specs receive done argument when enclosed in suite that doesn't define a module", 2, function () {
+
+        var theOmeletteModule      = "The Omelette Module (suite)",
+            shouldTasteAmazing     = "should taste amazing (spec)",
+            shouldTasteMoreAmazing = "should taste more amazing (spec)";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            okSpec(suite, shouldTasteMoreAmazing);
+            okSpec(suite, shouldTasteAmazing);
+            start();
+        });
+
+        // A plain suite which includes a jasq-spec
+        window.describe(theOmeletteModule, function () {
+
+            window.it(shouldTasteAmazing, function (done) {
+                window.expect(isFunction(done)).toBeTruthy();
+                done();
+            });
+
+            window.it(shouldTasteMoreAmazing, {
+                expect: function (done) {
+                    window.expect(isFunction(done)).toBeTruthy();
+                    done();
                 }
             });
 
@@ -179,7 +208,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     // Behaviour of spec-suites that are associated with Modules
     QUnit.module("Suites with Mod");
 
-    asyncTest("Module is available to specs within the suite", 3, function () {
+    asyncTest("Module is available to specs within the suite", 2, function () {
 
         var theOmeletteModule      = "The Omelette Module (suite)",
             shouldBePassedToSpecs  = "should be passed to specs (spec)",
@@ -188,7 +217,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBePassedToSpecs2);
             okSpec(suite, shouldBePassedToSpecs);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -207,7 +235,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Module is available to specs within nested suites", 13, function () {
+    asyncTest("Module is available to specs within nested suites", 10, function () {
 
         var theOmeletteModule                      = "The Omelette Module (suite)",
             shouldBePassedToSpecs                  = "should be passed to specs (spec)",
@@ -223,29 +251,26 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             shouldBePassedToSpecsNestedAfterTNestedSuite2 = "should be passed to specs defined with spec-config, after twice nested suite executes (spec)",
 
             //
-            inTermsOfSomeSubBehaviour     = "in terms of some sub-behaviour (suite)",
+            whichCanBeFurtherSpecialized  = "which can be further specialized (suite)",
             shouldBePassedToSpecsTNested  = "should be passed to specs (spec)",
             shouldBePassedToSpecsTNested2 = "should be passed to specs defined with spec-config (spec)";
 
         suiteWatcher
-        .onCompleted(inTermsOfSomeSubBehaviour, function (suite) {
+        .onCompleted([theOmeletteModule, inTermsOfSomeBehaviour, whichCanBeFurtherSpecialized], function (suite) {
             okSpec(suite, shouldBePassedToSpecsTNested2);
             okSpec(suite, shouldBePassedToSpecsTNested);
-            okSuite(suite, inTermsOfSomeSubBehaviour);
         })
-        .onCompleted(inTermsOfSomeBehaviour, function (suite) {
+        .onCompleted([theOmeletteModule, inTermsOfSomeBehaviour], function (suite) {
             okSpec(suite, shouldBePassedToSpecsNestedAfterTNestedSuite2);
             okSpec(suite, shouldBePassedToSpecsNestedAfterTNestedSuite);
             okSpec(suite, shouldBePassedToSpecsNested2);
             okSpec(suite, shouldBePassedToSpecsNested);
-            okSuite(suite, inTermsOfSomeBehaviour);
         })
         .onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBePassedToSpecsAfterNestedSuite2);
             okSpec(suite, shouldBePassedToSpecsAfterNestedSuite);
             okSpec(suite, shouldBePassedToSpecs2);
             okSpec(suite, shouldBePassedToSpecs);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -276,7 +301,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
                 // A _twice nested_ jasq suite (which woudl describe the 'Omelette' Module in terms
                 //  of some specific (imaginary in this case) sub-behaviour)
-                window.describe(inTermsOfSomeSubBehaviour, function () {
+                window.describe(whichCanBeFurtherSpecialized, function () {
 
                     window.it(shouldBePassedToSpecsTNested, function (omelette) {
                         window.expect(omelette.isOmelette).toBeTruthy();
@@ -310,7 +335,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Modules associated with nested suites shadow those of outer suites", 13, function () {
+    asyncTest("Modules associated with nested suites shadow those of outer suites", 10, function () {
 
         var theEggsModule                          = "The Eggs Module (suite)",
             shouldBePassedToSpecs                  = "should be passed to specs (spec)",
@@ -331,24 +356,21 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             shouldBePassedToSpecsTNested2 = "should be passed to specs defined with spec-config (spec)";
 
         suiteWatcher
-        .onCompleted(theBaconModule, function (suite) {
+        .onCompleted([theEggsModule, theOmeletteModule, theBaconModule], function (suite) {
             okSpec(suite, shouldBePassedToSpecsTNested2);
             okSpec(suite, shouldBePassedToSpecsTNested);
-            okSuite(suite, theBaconModule);
         })
-        .onCompleted(theOmeletteModule, function (suite) {
+        .onCompleted([theEggsModule, theOmeletteModule], function (suite) {
             okSpec(suite, shouldBePassedToSpecsNestedAfterTNestedSuite2);
             okSpec(suite, shouldBePassedToSpecsNestedAfterTNestedSuite);
             okSpec(suite, shouldBePassedToSpecsNested2);
             okSpec(suite, shouldBePassedToSpecsNested);
-            okSuite(suite, theOmeletteModule);
         })
         .onCompleted(theEggsModule, function (suite) {
             okSpec(suite, shouldBePassedToSpecsAfterNestedSuite2);
             okSpec(suite, shouldBePassedToSpecsAfterNestedSuite);
             okSpec(suite, shouldBePassedToSpecs2);
             okSpec(suite, shouldBePassedToSpecs);
-            okSuite(suite, theEggsModule);
             start();
         });
 
@@ -416,7 +438,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Module's state is not persisted across specs", 3, function () {
+    asyncTest("Module's state is not persisted across specs", 2, function () {
 
         var theOmeletteModule                   = "The Omelette Module (suite)",
             shouldHaveStateModified             = "should have its state potentially modified in specs (spec)",
@@ -425,7 +447,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldNotHaveModifiedStatePersisted);
             okSpec(suite, shouldHaveStateModified);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -444,14 +465,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies are injected into tested module (mocks defined on suite)", 2, function () {
+    asyncTest("Mocked dependencies are injected into tested module (mocks defined on suite)", 1, function () {
 
         var theOmeletteModule           = "The Omelette Module (suite)",
             shouldUseInjectedEggsModule = "should use the injected Eggs Module istead of its original dependency (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseInjectedEggsModule);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -473,14 +493,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies are injected into tested module (mocks defined on spec)", 2, function () {
+    asyncTest("Mocked dependencies are injected into tested module (mocks defined on spec)", 1, function () {
 
         var theOmeletteModule           = "The Omelette Module (suite)",
             shouldUseInjectedEggsModule = "should use the injected Eggs Module istead of its original dependency (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseInjectedEggsModule);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -500,14 +519,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on suite)", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on suite)", 1, function () {
 
         var theOmeletteModule                   = "The Omelette Module (suite)",
             shouldExposedSameMockedDependencies = "should use the same mocked dependencies as those in `dependencies` (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldExposedSameMockedDependencies);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -535,14 +553,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on spec)", 2, function () {
+    asyncTest("Mocked dependencies may be accessed through `dependencies` (mocks defined on spec)", 1, function () {
 
         var theOmeletteModule               = "The Omelette Module (suite)",
             shouldUseSameMockedDependencies = "should use the same mocked dependencies as those in `dependencies` (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseSameMockedDependencies);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -568,14 +585,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Mocked dependencies defined on spec override those defined on suite", 2, function () {
+    asyncTest("Mocked dependencies defined on spec override those defined on suite", 1, function () {
 
         var theOmeletteModule                    = "The Omelette Module (suite)",
             shouldUseOverridenMockedDependencies = "should use overriden mocked dependencies (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseOverridenMockedDependencies);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -612,14 +628,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 2, function () {
+    asyncTest("Non-mocked dependencies may be accessed through `dependencies`", 1, function () {
 
         var theOmeletteModule                  = "The Omelette Module (suite)",
             shouldUseSameNonMockedDependencies = "should use the same non-mocked dependencies as those in `dependencies` (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseSameNonMockedDependencies);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -640,14 +655,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("A module-defining function may be used to mock object-returning-modules", 2, function () {
+    asyncTest("A module-defining function may be used to mock object-returning-modules", 1, function () {
 
         var theOmeletteModule        = "The Omelette Module (suite)",
             shouldUseTheMockedModule = "should use the mocked Module (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseTheMockedModule);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -670,14 +684,13 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("A module-defining function may be used to mock function-returning-modules", 2, function () {
+    asyncTest("A module-defining function may be used to mock function-returning-modules", 1, function () {
 
         var theOmeletteModule        = "The Omelette Module (suite)",
             shouldUseTheMockedModule = "should use the mocked Module (spec)";
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldUseTheMockedModule);
-            okSuite(suite, theOmeletteModule);
             start();
         });
 
@@ -706,11 +719,12 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
         var theOmeletteModule  = "The Omelette Module (suite)",
             shouldBlahBlah     = "should blah blah - this should run (spec)",
-            shouldBlahBlahBlah = "should blah blah - this should not run (spec)";
+            shouldBlahBlahBlah = "should blah blah - this should not run (spec)",
+            disabledSpecRun    = false;
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBlahBlah);
-            okSuite(suite, theOmeletteModule);
+            ok(!disabledSpecRun, "disabled spec did not execute");
             start();
         });
 
@@ -725,30 +739,41 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             window.xit(shouldBlahBlahBlah, {
                 expect: function () {
                     // .. while this spec shouldn't
-                    window.expect(1).toBe(0);
+                    disabledSpecRun = true;
                 }
             });
+
         }).execute();
     });
 
     asyncTest("Suites may be disabled", 1, function () {
 
-        var theOmeletteModule = "The Omelette Module (suite)",
-            isSuiteExecuted = false;
+        var firstSpecRun, secondSpecRun;
 
         // A plain Jasmine suite which describes the 'Omelette' Module
-        window.xdescribe(theOmeletteModule, "omelette", function () {
-            isSuiteExecuted = true;
+        window.xdescribe("The Omelette Module (suite)", "omelette", function () {
+            window.it("should explode", {
+                expect: function () {
+                    // This spec should not run ..
+                    firstSpecRun = true;
+                }
+            });
+            window.xit("should self desctruct", {
+                expect: function () {
+                    // .. and this spec shouldn't run either
+                    secondSpecRun = true;
+                }
+            });
         }).execute();
 
         // Give it a sec - expect the suite not to have run
         window.setTimeout(function () {
-            strictEqual(isSuiteExecuted, false, "disabled suite did not execute");
+            ok(!firstSpecRun && !secondSpecRun, "disabled suite did not execute");
             start();
         }, 300);
     });
 
-    asyncTest("Specs may be asynchronous", 8, function () {
+    asyncTest("Specs may be asynchronous", 5, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             someEggsSpec       = "should blah blah, eggs, sync (spec)",
@@ -762,52 +787,50 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             someBaconSpecAsync = "should blah blah, bacon, async (spec)";
 
         suiteWatcher
-        .onCompleted(theBaconModule, function (suite) {
+        .onCompleted([theEggsModule, theOmeletteModule, theBaconModule], function (suite) {
             okSpec(suite, someBaconSpecAsync);
-            okSuite(suite, theBaconModule);
         })
-        .onCompleted(theOmeletteModule, function (suite) {
+        .onCompleted([theEggsModule, theOmeletteModule], function (suite) {
             okSpec(suite, someOtherOmeletteSpec);
             okSpec(suite, someOmeletteSpecAsync);
-            okSuite(suite, theOmeletteModule);
         })
         .onCompleted(theEggsModule, function (suite) {
             okSpec(suite, someOtherEggsSpec);
             okSpec(suite, someEggsSpec);
-            okSuite(suite, theEggsModule);
             start();
         });
 
         // A Jasq suite which describes the 'Eggs' Module
         window.describe(theEggsModule, "eggs", function () {
 
-            // This expectation refers to the Eggs Module
+            // This _sync_ expectation refers to the Eggs Module
             window.it(someEggsSpec, function () {
                 //
+                var x;
             });
 
             // A _nested_ jasq suite which describes the 'Omelette' Module
             window.describe(theOmeletteModule, "omelette", function () {
 
-                // This expectation refers to the Omelette Module
-                window.it(someOmeletteSpecAsync, function () {
-                    var isDone = false;
-                    window.setTimeout(function () { isDone = true; }, 300);
-                    window.waitsFor(function () { return isDone; });
-                    window.runs(function () {
-                        //
-                    });
+                // This _async_ expectation refers to the Omelette Module
+                window.it(someOmeletteSpecAsync, function (omelette, deps, done) {
+
+                    window.setTimeout(function () {
+                        done();
+                    }, 300);
+
                 });
 
                 // A _nested_ _nested_ jasq suite which describes the 'Bacon' Module
                 window.describe(theBaconModule, "bacon", function () {
 
-                    // This expectation refers to the Bacon Module
-                    window.it(someBaconSpecAsync, function () {
-                        window.waits(150);
-                        window.runs(function () {
-                            //
-                        });
+                    // This _async_ expectation refers to the Bacon Module
+                    window.it(someBaconSpecAsync, function (bacon, deps, done) {
+
+                        window.setTimeout(function () {
+                            done();
+                        }, 150);
+
                     });
                 });
 
