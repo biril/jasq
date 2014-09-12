@@ -1,5 +1,4 @@
-/*jshint browser:true */
-/*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, stop, jasmine */
+/*global define, describe, it, expect, spyOn */
 define(["jasq"], function (jasq) {
     "use strict";
 
@@ -48,28 +47,25 @@ define(["jasq"], function (jasq) {
             }
         });
 
-        // Mocked modB may be accessed through 'dependencies.mocks.modB'
+        // Mocked modB may be accessed through 'dependencies.modB'
         it("should expose modB's value", {
             mock: {
                 modB: {} // Mocking with an empty object
             },
             expect: function (modA, dependencies) {
-                dependencies.mocks.modB.getValue = function () {
+                dependencies.modB.getValue = function () {
                     return "D";
                 };
                 expect(modA.getModBValue()).toBe("D"); // Passes
             }
         });
 
-        // Stored modB may be accessed through 'dependencies.store.modB'
+        // Non-mocked modB may be accessed through 'dependencies.modB'
         it("should delegate to modB to expose modB's value", {
-            store: [
-                "modB"
-            ],
             expect: function (modA, dependencies) {
-                spyOn(dependencies.store.modB, "getValue");
+                spyOn(dependencies.modB, "getValue");
                 modA.getModBValue();
-                expect(dependencies.store.modB.getValue).toHaveBeenCalled(); // Passes
+                expect(dependencies.modB.getValue).toHaveBeenCalled(); // Passes
             }
         });
 
