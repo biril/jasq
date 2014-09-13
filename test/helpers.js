@@ -115,6 +115,7 @@ define(function () {
         isFunction: isFunction,
         isStrictlyObject: isStrictlyObject,
         each: each,
+        find: find,
         okSpec: okSpec,
         startSuiteWatcher: startSuiteWatcher
     };

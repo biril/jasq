@@ -8,12 +8,14 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         isFunction       = helpers.isFunction,
         isStrictlyObject = helpers.isStrictlyObject,
         each             = helpers.each,
+        find             = helpers.find,
 
         okSpec       = helpers.okSpec,
         okSuite      = helpers.okSuite,
         suiteWatcher = helpers.startSuiteWatcher(jasmine),
 
-        globalMethodNames = ["describe", "xdescribe", "it", "xit"];
+        globalMethodNames = ["describe", "xdescribe", "it", "xit"],
+        jasmineTimeoutInterval = jasmine.DEFAULT_TIMEOUT_INTERVAL;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -94,57 +96,54 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         window.describe(theThing, function () {
             window.it(shouldDoSomething, function () {
                 // .. expectations ..
-                window.expect(true).toBeTruthy();
             });
+
         }).execute();
     });
 
     asyncTest("Specs may be disabled", 2, function () {
 
-        var theThing = "The thing (suite)",
-            shouldDoSomething = "should do something (spec)",
+        var theThing           = "The thing (suite)",
+            shouldBlahBlah     = "should blah blah - this should run (spec)",
+            shouldBlahBlahBlah = "should blah blah - this should not run (spec)",
             isSecondSpecExecuted = false;
 
         suiteWatcher.onCompleted(theThing, function (suite) {
-            ok(!isSecondSpecExecuted, 'disabled spec (xit) did not execute');
-            okSpec(suite, shouldDoSomething);
+            ok(!isSecondSpecExecuted, 'Disabled spec (xit) did not execute');
+            okSpec(suite, shouldBlahBlah);
             start();
         });
 
         // A plain Jasmine suite which describes 'The thing'
         window.describe(theThing, function () {
-            window.it(shouldDoSomething, function () {
+            window.it(shouldBlahBlah, function () {
                 // .. expectations ..
-                window.expect(true).toBeTruthy();
             });
-            window.xit("should do something else", function () {
+            window.xit(shouldBlahBlahBlah, function () {
                 // .. expectations ..
                 isSecondSpecExecuted = true; // Should not run
             });
+
         }).execute();
     });
 
     asyncTest("Suites may be disabled", 1, function () {
 
-        var theThing = "The thing (suite)",
-            isSuiteExecuted = false;
+        var isSuiteExecuted;
 
         // A plain Jasmine suite which describes 'The thing'
-        window.xdescribe(theThing, function () {
+        window.xdescribe("The thing (suite)", function () {
             window.it('should explode (spec)', function () {
                 isSuiteExecuted = true;
             });
 
-        }).execute();
-
-        // Give it a sec - expect the suite not to have run
-        window.setTimeout(function () {
-            strictEqual(isSuiteExecuted, false, "disabled suite (xdescribe) did not execute");
+        }).execute(function () {
+            ok(!isSuiteExecuted, "Disabled suite (xdescribe) did not execute");
             start();
-        }, 300);
+        });
     });
 
-    asyncTest("Specs receive no arguments when enclosed in suite that doesn't define a module", 2, function () {
+    asyncTest("Synchronous specs receive no arguments", 2, function () {
 
         var theOmeletteModule      = "The Omelette Module (suite)",
             shouldTasteAmazing     = "should taste amazing (spec)",
@@ -172,7 +171,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         }).execute();
     });
 
-    asyncTest("Specs receive done argument when enclosed in suite that doesn't define a module", 2, function () {
+    asyncTest("Asynchronous specs receive done argument", 2, function () {
 
         var theOmeletteModule      = "The Omelette Module (suite)",
             shouldTasteAmazing     = "should taste amazing (spec)",
@@ -189,13 +188,61 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
             window.it(shouldTasteAmazing, function (done) {
                 window.expect(isFunction(done)).toBeTruthy();
-                done();
+                window.setTimeout(function () {
+                    done(); // Done asynchronously
+                }, 10);
             });
 
             window.it(shouldTasteMoreAmazing, {
                 expect: function (done) {
                     window.expect(isFunction(done)).toBeTruthy();
-                    done();
+                    done(); // Done synchronously
+                }
+            });
+
+        }).execute();
+    });
+
+    asyncTest("Asynchronous specs time out", 4, function () {
+
+        var theOmeletteModule  = "The Omelette Module (suite)",
+            shouldTasteAmazing = "should taste amazing (spec)",
+            shouldTasteAwesome = "should taste awesome (spec)";
+
+        suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+            var jasmineTimeoutMessage = "Error: Timeout - Async callback was not invoked within timeout specified by jasmine.DEFAULT_TIMEOUT_INTERVAL.",
+                shouldTasteAmazingSpec,
+                shouldTasteAwesomeSpec;
+
+            shouldTasteAmazingSpec = find(suite.specs, function (spec) {
+                return spec.description === shouldTasteAmazing;
+            });
+            shouldTasteAwesomeSpec = find(suite.specs, function (spec) {
+                return spec.description === shouldTasteAwesome;
+            });
+
+            strictEqual(shouldTasteAwesomeSpec.status, "failed", shouldTasteAwesome + " failed ..");
+            strictEqual(shouldTasteAwesomeSpec.failedExpectations[0].message, jasmineTimeoutMessage, ".. with message " + jasmineTimeoutMessage);
+
+            strictEqual(shouldTasteAmazingSpec.status, "failed", shouldTasteAmazing + " failed ..");
+            strictEqual(shouldTasteAmazingSpec.failedExpectations[0].message, jasmineTimeoutMessage, ".. with message " + jasmineTimeoutMessage);
+
+            start();
+        });
+
+        // A plain suite which includes a jasq-spec
+        window.describe(theOmeletteModule, function () {
+
+            window.beforeEach(function () { jasmine.DEFAULT_TIMEOUT_INTERVAL = 10; });
+            window.afterEach(function ()  { jasmine.DEFAULT_TIMEOUT_INTERVAL = jasmineTimeoutInterval; });
+
+            window.it(shouldTasteAmazing, function (done) {
+                // Never invokes `done`
+            });
+
+            window.it(shouldTasteAwesome, {
+                expect: function (done) {
+                    // Never invokes `done`
                 }
             });
 
@@ -720,11 +767,11 @@ define(["helpers", "jasq"], function (helpers, jasq) {
         var theOmeletteModule  = "The Omelette Module (suite)",
             shouldBlahBlah     = "should blah blah - this should run (spec)",
             shouldBlahBlahBlah = "should blah blah - this should not run (spec)",
-            disabledSpecRun    = false;
+            isSecondSpecExecuted = false;
 
         suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
             okSpec(suite, shouldBlahBlah);
-            ok(!disabledSpecRun, "disabled spec did not execute");
+            ok(!isSecondSpecExecuted, "Disabled spec (xit) did not execute");
             start();
         });
 
@@ -733,13 +780,12 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             window.it(shouldBlahBlah, {
                 expect: function () {
                     // This spec should run ..
-                    window.expect(1).toBe(1);
                 }
             });
             window.xit(shouldBlahBlahBlah, {
                 expect: function () {
                     // .. while this spec shouldn't
-                    disabledSpecRun = true;
+                    isSecondSpecExecuted = true;
                 }
             });
 
@@ -748,32 +794,30 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
     asyncTest("Suites may be disabled", 1, function () {
 
-        var firstSpecRun, secondSpecRun;
+        var isSuiteExecuted;
 
         // A plain Jasmine suite which describes the 'Omelette' Module
         window.xdescribe("The Omelette Module (suite)", "omelette", function () {
             window.it("should explode", {
                 expect: function () {
                     // This spec should not run ..
-                    firstSpecRun = true;
+                    isSuiteExecuted = true;
                 }
             });
             window.xit("should self desctruct", {
                 expect: function () {
                     // .. and this spec shouldn't run either
-                    secondSpecRun = true;
+                    isSuiteExecuted = true;
                 }
             });
-        }).execute();
 
-        // Give it a sec - expect the suite not to have run
-        window.setTimeout(function () {
-            ok(!firstSpecRun && !secondSpecRun, "disabled suite did not execute");
+        }).execute(function () {
+            ok(!isSuiteExecuted, "Disabled suite (xdescribe) did not execute");
             start();
-        }, 300);
+        });
     });
 
-    asyncTest("Specs may be asynchronous", 5, function () {
+    asyncTest("Asynchronous specs receive done argument", 5, function () {
 
         var theEggsModule      = "The Eggs Module (suite)",
             someEggsSpec       = "should blah blah, eggs, sync (spec)",
@@ -806,7 +850,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
             // This _sync_ expectation refers to the Eggs Module
             window.it(someEggsSpec, function () {
                 //
-                var x;
             });
 
             // A _nested_ jasq suite which describes the 'Omelette' Module
@@ -814,10 +857,10 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
                 // This _async_ expectation refers to the Omelette Module
                 window.it(someOmeletteSpecAsync, function (omelette, deps, done) {
-
+                    window.expect(isFunction(done)).toBeTruthy();
                     window.setTimeout(function () {
-                        done();
-                    }, 300);
+                        done(); // Done asynchronously
+                    }, 10);
 
                 });
 
@@ -826,11 +869,8 @@ define(["helpers", "jasq"], function (helpers, jasq) {
 
                     // This _async_ expectation refers to the Bacon Module
                     window.it(someBaconSpecAsync, function (bacon, deps, done) {
-
-                        window.setTimeout(function () {
-                            done();
-                        }, 150);
-
+                        window.expect(isFunction(done)).toBeTruthy();
+                        done(); // Done synchronously
                     });
                 });
 
