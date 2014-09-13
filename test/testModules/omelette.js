@@ -2,14 +2,14 @@
 
 // The omelette module
 define(["eggs", "bacon", "eat"], function (eggs, bacon, eat) {
-    "use strict";
+  "use strict";
 
-    return {
-        isOmelette: true,
-        isMocked: false,
+  return {
+    isOmelette: true,
+    isMocked: false,
 
-        getEggs: function () { return eggs; },
-        getBacon: function () { return bacon; },
-        eat: eat
-    };
+    getEggs: function () { return eggs; },
+    getBacon: function () { return bacon; },
+    eat: eat
+  };
 });

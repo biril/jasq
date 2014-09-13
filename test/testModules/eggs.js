@@ -2,9 +2,9 @@
 
 // The eggs module
 define(function () {
-    "use strict";
-    return {
-        isEggs: true,
-        isMocked: false
-    };
+  "use strict";
+  return {
+    isEggs: true,
+    isMocked: false
+  };
 });

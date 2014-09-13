@@ -2,14 +2,14 @@
 
 // Module A
 define(["modB"], function (modB) {
-    "use strict";
+  "use strict";
 
-    return {
-        getValue: function () {
-            return "A";
-        },
-        getModBValue: function () {
-            return modB.getValue();
-        }
-    };
+  return {
+    getValue: function () {
+      return "A";
+    },
+    getModBValue: function () {
+      return modB.getValue();
+    }
+  };
 });

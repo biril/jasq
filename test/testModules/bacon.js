@@ -2,9 +2,9 @@
 
 // The bacon module
 define(function () {
-    "use strict";
-    return {
-        isBacon: true,
-        isMocked: false
-    };
+  "use strict";
+  return {
+    isBacon: true,
+    isMocked: false
+  };
 });

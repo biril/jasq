@@ -26,48 +26,48 @@ extentions to Jasmine's built in functionality to be used as (and if) needed:
 ```javascript
 // Invoke 'describe' - do not associate a module which the suite
 describe("My suite", function () {
-	// .. Jasmine specs ..
+  // .. Jasmine specs ..
 });
 
 // Invoke 'describe' passing a moduleName argument to associate the suite
 //  with the module. Contained specs gain access to the module
 describe("My suite", "tested/module/name", function () {
-	// .. specs ..
+  // .. specs ..
 });
 
 // Invoke 'describe' passing a suiteConfig hash as a second argument. Allows
 //  specifying mocks through suiteConfig.mock
 describe("My suite", {
-	moduleName: "tested/module/name",
-	mock: function () {
-		// Return a hash of mocked dependencies
-	},
-	specify: function () {
-		// .. specs ..
-	}
+  moduleName: "tested/module/name",
+  mock: function () {
+    // Return a hash of mocked dependencies
+  },
+  specify: function () {
+    // .. specs ..
+  }
 });
 
 // Invoke 'it'
 it("should do something", function () {
-	// .. expectations ..
+  // .. expectations ..
 });
 
 // Invoke 'it' expecting a module. Specs defined within a suite associated
 //  with a module will receive one. Additionally they will receive the
 //  module's dependecies
 it("should do something", function (module, dependencies) {
-	// .. expectations ..
+  // .. expectations ..
 });
 
 // Invoke 'it' passing a specConfig hash as a second argument. Allows
 //  specifying mocks through specConfig.mock
 it("should do something", {
-	mock: {
-		// Define mocked dependencies
-	},
-	expect: function (module, dependencies) {
-		// .. expectations ..
-	})
+  mock: {
+    // Define mocked dependencies
+  },
+  expect: function (module, dependencies) {
+    // .. expectations ..
+  })
 };
 ```
 
@@ -83,23 +83,23 @@ Consider modules `modA`, `modB` where the latter is a dependency of the former:
 ```javascript
 // Defined in ModB.js:
 define(function () {
-	return {
-		getValue: function () {
-			return "B";
-		}
-	};
+  return {
+    getValue: function () {
+      return "B";
+    }
+  };
 });
 
 // Defined in modA.js:
 define(["modB"], function (modB) {
-	return {
-		getValue: function () {
-			return "A";
-		},
-		getModBValue: function () {
-			return modB.getValue();
-		}
-	};
+  return {
+    getValue: function () {
+      return "A";
+    },
+    getModBValue: function () {
+      return modB.getValue();
+    }
+  };
 });
 ```
 
@@ -108,7 +108,7 @@ Jasq (but not the tested `modA` itself):
 
 ```javascript
 define(["jasq"], function () {
-	// Implement modA test suite
+  // Implement modA test suite
 });
 ```
 
@@ -116,11 +116,11 @@ Define the test suite by invoking `describe`, passing the module name as an addi
 
 ```javascript
 require(["jasq"], function () {
-	// The name of the tested module - 'modA' - is passed as a 2nd parameter
-	//  to the describe call
-	describe("The modA module", "modA", function () {
-		// Implement modA specs
-	});
+  // The name of the tested module - 'modA' - is passed as a 2nd parameter
+  //  to the describe call
+  describe("The modA module", "modA", function () {
+    // Implement modA specs
+  });
 });
 ```
 This will make the module available to all specs within the suite as the expectation-function
@@ -128,13 +128,13 @@ passed to any nested `it` will now be invoked with `modA` as an argument:
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		// The module is passed to specs within the suite, as a parameter
-		it("should have a value of 'A'", function (modA) {
-			expect(modA.getValue()).toBe("A"); // Passes
-		});
-	});
+    // The module is passed to specs within the suite, as a parameter
+    it("should have a value of 'A'", function (modA) {
+      expect(modA.getValue()).toBe("A"); // Passes
+    });
+  });
 });
 ```
 
@@ -142,16 +142,16 @@ Note that the module will also be available to specs within _nested_ suites:
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		describe("its value", function () {
+    describe("its value", function () {
 
-			// The module is also passed to specs within the nested suite
-			it("should be 'A'", function (modA) {
-				expect(modA.getValue()).toBe("A"); // Passes
-			});
-		});
-	});
+      // The module is also passed to specs within the nested suite
+      it("should be 'A'", function (modA) {
+        expect(modA.getValue()).toBe("A"); // Passes
+      });
+    });
+  });
 });
 ```
 
@@ -159,21 +159,21 @@ Additionally, Jasq ensures that module state will not be persisted across specs:
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		// This spec modifies modA
-		it("should have a value of 'C' when tweaked", function (modA) {
-			modA.getValue = function () {
-				return "C";
-			};
-			expect(modA.getValue()).toBe("C"); // Passes
-		});
+    // This spec modifies modA
+    it("should have a value of 'C' when tweaked", function (modA) {
+      modA.getValue = function () {
+        return "C";
+      };
+      expect(modA.getValue()).toBe("C"); // Passes
+    });
 
-		// This spec is passed the original, unmodified modA
-		it("should have a value of A", function (modA) {
-			expect(modA.getValue()).toBe("A"); // Passes
-		});
-	});
+    // This spec is passed the original, unmodified modA
+    it("should have a value of A", function (modA) {
+      expect(modA.getValue()).toBe("A"); // Passes
+    });
+  });
 });
 ```
 
@@ -184,25 +184,25 @@ example, `modB` is mapped to a `mockB` object:
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		// Define a mock for modB
-		var mockB = {
-			getValue: function () {
-				return "C";
-			}
-		};
+    // Define a mock for modB
+    var mockB = {
+      getValue: function () {
+        return "C";
+      }
+    };
 
-		// modA will use the mocked version of modB
-		it("should expose modB's value", {
-			mock: {
-				modB: mockB
-			},
-			expect: function (modA) {
-				expect(modA.getModBValue()).toBe("C"); // Passes
-			}
-		});
-	});
+    // modA will use the mocked version of modB
+    it("should expose modB's value", {
+      mock: {
+        modB: mockB
+      },
+      expect: function (modA) {
+        expect(modA.getModBValue()).toBe("C"); // Passes
+      }
+    });
+  });
 });
 ```
 
@@ -211,21 +211,21 @@ mocked dependencies:
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		// Mocked modB may be accessed through 'dependencies.modB'
-		it("should expose modB's value", {
-			mock: {
-				modB: {} // Mocking with an empty object
-			},
-			expect: function (modA, dependencies) {
-				dependencies.modB.getValue = function () {
-					return "D";
-				};
-				expect(modA.getModBValue()).toBe("D"); // Passes
-			}
-		});
-	});
+    // Mocked modB may be accessed through 'dependencies.modB'
+    it("should expose modB's value", {
+      mock: {
+        modB: {} // Mocking with an empty object
+      },
+      expect: function (modA, dependencies) {
+        dependencies.modB.getValue = function () {
+          return "D";
+        };
+        expect(modA.getModBValue()).toBe("D"); // Passes
+      }
+    });
+  });
 });
 ```
 
@@ -234,16 +234,15 @@ Often, it may be useful to access a dependency without necessarily creating a mo
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", "modA", function () {
+  describe("The modA module", "modA", function () {
 
-		// modB may be accessed through 'dependencies.modB'
-		it("should delegate to modB to expose modB's value", function (modA, dependencies) {
-				spyOn(dependencies.modB, "getValue");
-				modA.getModBValue();
-				expect(dependencies.modB.getValue).toHaveBeenCalled(); // Passes
-			}
-		});
-	});
+    // modB may be accessed through 'dependencies.modB'
+    it("should delegate to modB to expose modB's value", function (modA, dependencies) {
+      spyOn(dependencies.modB, "getValue");
+      modA.getModBValue();
+      expect(dependencies.modB.getValue).toHaveBeenCalled(); // Passes
+    });
+  });
 });
 ```
 
@@ -259,40 +258,40 @@ To do this, `describe` should be invoked with a `suiteConfig` hash as a second a
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", {
-		moduleName: "modA",
-		mock: function () {
+  describe("The modA module", {
+    moduleName: "modA",
+    mock: function () {
 
-			// Define a mock for modB
-			return {
-				modB: {
-					getValue: function () {
-						return "C";
-					}
-				}
-			};
-		},
-		specify: function () {
+      // Define a mock for modB
+      return {
+        modB: {
+          getValue: function () {
+            return "C";
+          }
+        }
+      };
+    },
+    specify: function () {
 
-			// modA will use the mocked version of modB
-			it("should expose modB's value", function (modA) {
-				expect(modA.getModBValue()).toBe("C"); // Passes
-			});
+      // modA will use the mocked version of modB
+      it("should expose modB's value", function (modA) {
+        expect(modA.getModBValue()).toBe("C"); // Passes
+      });
 
-			// This spec modifies the mocked modB
-			it("should not cache modB's value", function (modA, dependencies) {
-				dependencies.modB.getValue = function () {
-					return "D";
-				};
-				expect(modA.getModBValue()).toBe("D"); // Passes
-			});
+      // This spec modifies the mocked modB
+      it("should not cache modB's value", function (modA, dependencies) {
+        dependencies.modB.getValue = function () {
+          return "D";
+        };
+        expect(modA.getModBValue()).toBe("D"); // Passes
+      });
 
-			// modA will use the mocked version of modB, unmodified
-			window.it("should expose modB's value - again", function (modA) {
-				window.expect(modA.getModBValue()).toBe("C"); // Passes
-			});
-		}
-	});
+      // modA will use the mocked version of modB, unmodified
+      window.it("should expose modB's value - again", function (modA) {
+        window.expect(modA.getModBValue()).toBe("C"); // Passes
+      });
+    }
+  });
 });
 ```
 
@@ -300,36 +299,36 @@ Note that mocks defined at the suite level will be overriden by those defined in
 
 ```javascript
 require(["jasq"], function () {
-	describe("The modA module", {
-		moduleName: "modA",
-		mock: function () {
+  describe("The modA module", {
+    moduleName: "modA",
+    mock: function () {
 
-			// Define a mock for modB
-			return {
-				modB: {
-					getValue: function () {
-						return "C";
-					}
-				}
-			};
-		},
-		specify: function () {
+      // Define a mock for modB
+      return {
+        modB: {
+          getValue: function () {
+            return "C";
+          }
+        }
+      };
+    },
+    specify: function () {
 
-			// Redefine the modB mock - modA will use the redefined version
-			it("should expose modB's value", {
-				mock: {
-					modB: {
-						getValue: function () {
-							return "D";
-						}
-					}
-				},
-				expect: function (modA) {
-					expect(modA.getModBValue()).toBe("D"); // Passes
-				}
-			});
-		}
-	});
+      // Redefine the modB mock - modA will use the redefined version
+      it("should expose modB's value", {
+        mock: {
+          modB: {
+            getValue: function () {
+              return "D";
+            }
+          }
+        },
+        expect: function (modA) {
+          expect(modA.getModBValue()).toBe("D"); // Passes
+        }
+      });
+    }
+  });
 });
 ```
 
@@ -345,11 +344,11 @@ off a test suite would be
 ```html
 <html>
 <head>
-	<title>Example Test Suite</title>
-	<link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
-	<script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
-	<script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
-	<script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
+  <title>Example Test Suite</title>
+  <link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
+  <script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
+  <script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
+  <script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
 </head>
 
 <body>
@@ -362,23 +361,24 @@ with an accompanying `main.js`:
 ```javascript
 // Configure require
 require.config({
-	baseUrl: "base/path/to/tested/modules",
-	paths: {
-		jasq: "path/to/jasq"
-	}
+    baseUrl: "base/path/to/tested/modules",
+    paths: {
+        jasq: "path/to/jasq"
+    }
 });
 
 // Configure Jasmine
-var jasmineEnv = jasmine.getEnv(),
-	htmlReporter = new jasmine.HtmlReporter();
+var
+  jasmineEnv = jasmine.getEnv(),
+  htmlReporter = new jasmine.HtmlReporter();
 jasmineEnv.addReporter(htmlReporter);
 jasmineEnv.specFilter = function (spec) {
-	return htmlReporter.specFilter(spec);
+    return htmlReporter.specFilter(spec);
 };
 
 // Require the spec and run suite once loaded
 require(["path/to/spec"], function () {
-	jasmineEnv.execute();
+  jasmineEnv.execute();
 });
 ```
 

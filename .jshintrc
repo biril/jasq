@@ -1,15 +1,15 @@
 {
-    "curly": true,
-    "eqeqeq": true,
-    "forin": true,
-    "immed": true,
-    "latedef": true,
-    "newcap": true,
-    "undef": true,
-    "strict": true,
-    "trailing": true,
-    "onevar": true,
-    "smarttabs": true,
-    "noarg": true,
-    "expr": true
+  "curly": true,
+  "eqeqeq": true,
+  "forin": true,
+  "immed": true,
+  "latedef": true,
+  "newcap": true,
+  "undef": true,
+  "strict": true,
+  "trailing": true,
+  "onevar": true,
+  "smarttabs": true,
+  "noarg": true,
+  "expr": true
 }

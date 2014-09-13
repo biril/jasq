@@ -2,11 +2,11 @@
 
 // Module B
 define(function () {
-    "use strict";
+  "use strict";
 
-    return {
-        getValue: function () {
-            return "B";
-        }
-    };
+  return {
+    getValue: function () {
+      return "B";
+    }
+  };
 });

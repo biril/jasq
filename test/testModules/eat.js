@@ -2,11 +2,11 @@
 
 // The eat module
 define(function () {
-    "use strict";
+  "use strict";
 
-    var f = function () {};
-    f.isEat = true;
-    f.isMocked = false;
+  var f = function () {};
+  f.isEat = true;
+  f.isMocked = false;
 
-    return f;
+  return f;
 });
