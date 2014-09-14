@@ -102,11 +102,10 @@ define(function () {
     //  it as a Jasmine reporter once. Subsequent calls will return the one-and-only instance
     suiteWatcher = null,
     startSuiteWatcher = function (jasmine) {
-      var suiteWatcher = new SuiteWatcher();
-      jasmine.getEnv().addReporter(suiteWatcher);
-      startSuiteWatcher = function () {
-        return suiteWatcher;
-      };
+      if (!suiteWatcher) {
+        suiteWatcher = new SuiteWatcher();
+        jasmine.getEnv().addReporter(suiteWatcher);
+      }
       return suiteWatcher;
     };
 
