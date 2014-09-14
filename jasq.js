@@ -108,11 +108,9 @@ define(function () {
       return suitePath;
     },
 
-    // Path of the suite that is currently being defined
-    curDefSuitePath = [],
-
-    // Path of the suite that is currently executing
-    curExecSuitePath = [],
+    // Path of the 'current suite'. Holds the path of the suite that is currently being defined
+    //  OR currently being executed - these never overlap
+    curSuitePath = [],
 
     // A collection of test-suite configurations. A configuration is uniquely identified by the
     //  path of the suite it refers to and includes the (name of the) module under test and
@@ -218,13 +216,13 @@ define(function () {
       var contextId, load, suiteConfig, mock;
 
       // Mods will load in a new requirejs context, specific to this spec. This is its id
-      contextId = createContextId(curDefSuitePath, specDescription);
+      contextId = createContextId(curSuitePath, specDescription);
 
       // Create the context, configuring require appropriately and obtaining a loader
       load = configRequireForContext(contextId);
 
       // Configuration of current suite (name of module to load & mock function, if any)
-      suiteConfig = suiteConfigs.get(curDefSuitePath) || {};
+      suiteConfig = suiteConfigs.get(curSuitePath) || {};
 
       // Modules to mock, as specified at the suite level as well as the spec level
       mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
@@ -297,18 +295,18 @@ define(function () {
         //  suite instance for the latter does not yet exist so we'll have to build the
         //  path by concatenating this new suite's description with the parent suite's
         //  path (if there is one)
-        curDefSuitePath.push(suiteDescription);
+        curSuitePath.push(suiteDescription);
 
         if (!isX) {
           // suitePath = getSuitePath(jasmineEnv.currentSuite).concat(suiteDescription);
           // suiteConfigs.add(suitePath, args.moduleName, args.mock);
-          suiteConfigs.add(curDefSuitePath, args.moduleName, args.mock);
+          suiteConfigs.add(curSuitePath, args.moduleName, args.mock);
         }
 
         // Ultimately, the native Jasmine version is run. The crucial step was creating
         //  the mapping above, for later use in `it`-specs
         ret = jasmineDescribe(suiteDescription, args.specify);
-        curDefSuitePath.pop();
+        curSuitePath.pop();
         return ret;
       };
     },
@@ -333,7 +331,7 @@ define(function () {
         //  native Jasmine version - this will avoid forcing spec to run asynchronously.
         //  Also run the native version in the case the the caller invoked `xit` - the spec
         //  will not execute so there's no reason to incur the module (re)loading overhead
-        if (!suiteConfigs.get(curDefSuitePath) || isX) {
+        if (!suiteConfigs.get(curSuitePath) || isX) {
 
           // We tolerate the caller passing an expectation-hash into a spec which is not
           //  part of a jasq-suite - we just keep the expectation function and ignore
@@ -381,12 +379,12 @@ define(function () {
       jasmineEnv.addReporter((function () {
         var SuiteConfigSweeper = function () {
             this.suiteStarted = function (suite) {
-              curExecSuitePath.push(suite.description);
+              curSuitePath.push(suite.description);
             };
             this.suiteDone = function (suite) {
-              // curExecSuitePath[curExecSuitePath.length - 1] === suite.description)
-              suiteConfigs.remove(curExecSuitePath);
-              curExecSuitePath.pop();
+              // Expecting `curSuitePath[curSuitePath.length - 1] === suite.description)`
+              suiteConfigs.remove(curSuitePath);
+              curSuitePath.pop();
             };
           };
         return new SuiteConfigSweeper();
