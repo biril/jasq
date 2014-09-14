@@ -71,9 +71,13 @@ define(function () {
       };
 
       this.suiteDone = function (completedSuite) {
-        var currentSuiteIndex = this._getSuiteIndex(this.currentSuitePath);
-        if (this.currentSuitePath.pop() !== completedSuite.description) {
-          throw "Completed suite '" + completedSuite.description + "' does not match current";
+        var
+          currentSuiteIndex = this._getSuiteIndex(this.currentSuitePath),
+          expectedSuiteDescription = this.currentSuitePath.pop();
+
+        if (expectedSuiteDescription !== completedSuite.description) {
+          throw "Completed suite '" + completedSuite.description +
+            "' does not match current (" + expectedSuiteDescription + ")";
         }
         if (currentSuiteIndex !== -1) {
           var suite = this.suites[currentSuiteIndex];
