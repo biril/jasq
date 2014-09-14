@@ -267,47 +267,36 @@ define(function () {
       //      * `specify`: The function to execute the suite's specs
       return function (suiteDescription) {
 
-        var args, suitePath, ret;
+        var args, suite;
 
-        // Parse given arguments as if they were suitable for the jasq-version of
-        //  `describe`. `args` will be null if they're not, otherwise it will contain
-        //  the expected `moduleName`, `mock` and `specify` properties
-        args = parseArgsForJasqDescribe(arguments);
+        // Parse given arguments as if they were suitable for the jasq-version of `describe`.
+        //  `args` will contain the expected `moduleName`, `mock` and `specify` properties if they
+        //  are, or will be `null` if they're not. In the latter case, just delegate to the native
+        //  jasmine version
+        if(!(args = parseArgsForJasqDescribe(arguments))) {
+          return jasmineDescribe.apply(null, arguments);
+        }
 
-        // Path of current suite. To be set later on, if needed
-        suitePath = null;
-
-        // If given arguments are not appropriate for the jasq version of `(x)describe`
-        //  then just run the native Jasmine version
-        // if (!isArgsForJasqDescribe(arguments)) {
-        if (!args) { return jasmineDescribe.apply(null, arguments); }
-
-        // Map given module (name) to given suite (path).
-        //
-        // It is assumed here that suite paths are unique within the mappings.
-        //  `suiteConfigs.add` will throw in the event that a mapping is attempted
-        //  to a pre-existing suite (path). This will generally not happen as
-        //   * mappings are cleared whenever suites complete (see `init`/`MapSweeper`)
-        //   * disabled suites (which _never_ complete) are not mapped at all (`isX`
-        //     indicates that this is in fact a disabled suite)
-        //
-        // To create the mapping, the path of the suite to-be-created is needed. A
-        //  suite instance for the latter does not yet exist so we'll have to build the
-        //  path by concatenating this new suite's description with the parent suite's
-        //  path (if there is one)
+        // Set the current suite-path to the path of this suite. All specs defined within this
+        //  suite (but not nested suites) will make use the suite-config mapped to this suite-path.
+        //  When the all nested specs / suites are defined, the current suite-path will be set back
+        //  to its previous value - the parent-suite path
         curSuitePath.push(suiteDescription);
 
+        // Map a suite-config to the current suite-path - but only if this is not a call to
+        //  `xdescribe`. In the latter case the suite's specs will never run so there's no need
         if (!isX) {
-          // suitePath = getSuitePath(jasmineEnv.currentSuite).concat(suiteDescription);
-          // suiteConfigs.add(suitePath, args.moduleName, args.mock);
           suiteConfigs.add(curSuitePath, args.moduleName, args.mock);
         }
 
         // Ultimately, the native Jasmine version is run. The crucial step was creating
         //  the mapping above, for later use in `it`-specs
-        ret = jasmineDescribe(suiteDescription, args.specify);
+        suite = jasmineDescribe(suiteDescription, args.specify);
+
+        // Set the current suite-path back to its previous value - the parent-suite path
         curSuitePath.pop();
-        return ret;
+
+        return suite;
       };
     },
 
