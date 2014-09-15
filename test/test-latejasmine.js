@@ -1,5 +1,5 @@
 /*jshint browser:true */
-/*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, stop, throws, jasmine */
+/*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, throws, jasmineRequire */
 define(["helpers", "jasq"], function (helpers, jasq) {
   "use strict";
 
@@ -10,8 +10,22 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     globalMethodNames = ["describe", "xdescribe", "it", "xit"],
 
     whenJasmineLoaded = function (onJasmineLoaded) {
-      if (window.jasmine) { return onJasmineLoaded(); }
-      require(["vendor/jasmine/jasmine.js"], function () { onJasmineLoaded(); });
+      if (window.jasmine) {
+        return onJasmineLoaded();
+      }
+
+      require(["vendor/jasmine/2.0.2/jasmine.js"], function () {
+        window.jasmine = jasmineRequire.core(jasmineRequire);
+        var env = window.jasmine.getEnv();
+        var jasmineInterface = jasmineRequire.interface(window.jasmine, env);
+        for (var prop in jasmineInterface) {
+          if (jasmineInterface.hasOwnProperty(prop)) {
+            window[prop] = jasmineInterface[prop];
+          }
+        }
+
+        onJasmineLoaded();
+      });
     };
 
   ////////////////////////////////////
