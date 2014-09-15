@@ -209,9 +209,9 @@ define(function () {
     },
 
     // Create a function to execute the spec of given `specDescription` and `specConfig` after
-    //  (re)loading the tested module and mocking its dependencies as specified at the
-    //  (current) suite and (given) spec level
-    createSpec = function (specDescription, specConfig) {
+    //  (re)loading the tested module and mocking its dependencies as specified at the (current)
+    //  suite and (given) spec level
+    createJasqSpec = function (specDescription, specConfig) {
 
       var contextId, load, suiteConfig, mock;
 
@@ -283,17 +283,17 @@ define(function () {
         //  to its previous value - the parent-suite path
         curSuitePath.push(suiteDescription);
 
-        // Map a suite-config to the current suite-path - but only if this is not a call to
-        //  `xdescribe`. In the latter case the suite's specs will never run so there's no need
-        if (!isX) {
-          suiteConfigs.add(curSuitePath, args.moduleName, args.mock);
-        }
+        // Map a suite-config to the current suite-path (if this is an `xdescribe` call, this will
+        //  make no difference as the suite's specs will never execute. However, it's simpler to
+        //  always `push` here and always `pop` later - instead of adding more logic)
+        suiteConfigs.add(curSuitePath, args.moduleName, args.mock);
 
         // Ultimately, the native Jasmine version is run. The crucial step was creating
         //  the mapping above, for later use in `it`-specs
         suite = jasmineDescribe(suiteDescription, args.specify);
 
         // Set the current suite-path back to its previous value - the parent-suite path
+        suiteConfigs.remove(curSuitePath);
         curSuitePath.pop();
 
         return suite;
@@ -322,9 +322,8 @@ define(function () {
         //  will not execute so there's no reason to incur the module (re)loading overhead
         if (!suiteConfigs.get(curSuitePath) || isX) {
 
-          // We tolerate the caller passing an expectation-hash into a spec which is not
-          //  part of a jasq-suite - we just keep the expectation function and ignore
-          //  everything else
+          // We tolerate the caller passing an expectation-hash into a spec which is not nested
+          //  within a jasq-suite - in this case we're only interested in the expectation-function
           if (isStrictlyObject(specConfig)) {
             specConfig = specConfig.expect;
           }
@@ -338,7 +337,7 @@ define(function () {
         }
 
         // Execute Jasmine's `(x)it` on an appropriately modified _asynchronous_ spec
-        return jasmineIt(specDescription, createSpec(specDescription, specConfig));
+        return jasmineIt(specDescription, createJasqSpec(specDescription, specConfig));
       };
     },
 
@@ -360,24 +359,6 @@ define(function () {
       jasq.xit       = getJasqIt(true);
 
       each(apiNames, function (name) { jasq[name].isJasq = true; });
-
-      // Register the suiteConfigSweeper as a jasmine-reporter to perform housekeeping on
-      //  the collection of suite-configs. It will wait for suites to finish and remove the
-      //  relevant config, if one is found. Besides keeping the collection from growing
-      //  indefinitely, this also allows definining multiple suites with the same path
-      jasmineEnv.addReporter((function () {
-        var SuiteConfigSweeper = function () {
-            this.suiteStarted = function (suite) {
-              curSuitePath.push(suite.description);
-            };
-            this.suiteDone = function (suite) {
-              // Expecting `curSuitePath[curSuitePath.length - 1] === suite.description)`
-              suiteConfigs.remove(curSuitePath);
-              curSuitePath.pop();
-            };
-          };
-        return new SuiteConfigSweeper();
-      }()));
 
       // Don't `init` more than once
       init = noOp;
