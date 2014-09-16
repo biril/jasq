@@ -5,13 +5,16 @@
 
   "use strict";
 
-  // Configure require
+  //// Configure require
   require.config({
     baseUrl: "../test/testModules",
     paths: {
       jasq: "../../jasq"
     }
   });
+
+  //// Configure Jasmine. This is based on Jasmine's boot.js -
+  ////  see https://github.com/pivotal/jasmine/blob/master/lib/jasmine-core/boot.js
 
   // Require Jasmine's core files. Specifically, this requires and attaches all of Jasmine's code
   //  to the `jasmine` reference
@@ -74,7 +77,7 @@
   window.clearTimeout = window.clearTimeout;
   window.clearInterval = window.clearInterval;
 
-  // Require the spec and run suite once loaded
+  //// Require the spec and run suite once loaded
   require(["../../example/spec"], function () {
     htmlReporter.initialize();
     window.jasmine.getEnv().execute();

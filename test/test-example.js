@@ -276,4 +276,42 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     }).execute();
   });
 
+  asyncTest("Jasmine `done` is available to async specs that are associated with a module", 1, function () {
+
+    var
+      theModAModule = "The modA module (suite)",
+      shouldHaveValueAAfterAWhile = "should have value A, after a while (spec)";
+
+    suiteWatcher.onCompleted(theModAModule, function (suite) {
+      okSpec(suite, shouldHaveValueAAfterAWhile);
+      start();
+    });
+
+    // If spec is associated with a module access 'done' as the third argument
+    window.describe(theModAModule, "modA", function () {
+
+      window.it(shouldHaveValueAAfterAWhile, function (modA, dependencies, done) {
+        modA.getValueAfterAWhile(function (value) {
+          window.expect(value).toBe("A"); // Passes
+          done(); // Invoked to start the spec
+        });
+      });
+
+    }).execute();
+  });
+
+  asyncTest("Jasmine `done` is available to async specs that aren't associated with a module", 0, function () {
+
+    // Otherwise access 'done' as the first (and only) argument
+    window.describe("Something", function () {
+
+      window.it("should happen after a while", function (done) {
+        setTimeout(function () {
+          done(); // Invoked to start the spec
+        }, 100);
+      });
+
+    }).execute(function () { start(); });
+  });
+
 });

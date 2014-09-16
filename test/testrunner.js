@@ -5,7 +5,9 @@
 
   "use strict";
 
-  ////// {{ Jasmine v >= 2.0.0 requires a bit of initialization:
+  ////// {{ Jasmine v >= 2.0.0 requires a bit of initialization -
+  //////  based on Jasmine's boot.js - see
+  //////   https://github.com/pivotal/jasmine/blob/master/lib/jasmine-core/boot.js
 
   // Require Jasmine's core files. Specifically, this requires and attaches all of Jasmine's code
   //  to the `jasmine` reference

@@ -71,8 +71,10 @@ it("should do something", {
 };
 ```
 
-Jasq uses [RequireJS](https://github.com/jrburke/requirejs) for loading modules. At this point
-it has only been tested in the browser (i.e. no Node support). This may change in the future.
+Jasq uses [RequireJS](https://github.com/jrburke/requirejs) for loading modules and is compatible
+with [Jasmine, versions >= 2.0.0](https://github.com/pivotal/jasmine/releases). The current
+revision is tested against Jamsine v2.0.2 and only in a browser environment - support for Node is
+work in progress.
 
 
 Jasq by example
@@ -95,6 +97,11 @@ define(["modB"], function (modB) {
   return {
     getValue: function () {
       return "A";
+    },
+    getValueAfterAWhile (cb) {
+      setTimeout(function () {
+        cb("A");
+      }, 100)
     },
     getModBValue: function () {
       return modB.getValue();
@@ -332,55 +339,46 @@ require(["jasq"], function () {
 });
 ```
 
+Asynchronous specs which are associated with a module, or are part of a suite associated with a
+module, can access Jasmine's `done` function as the _third_ argument. For specs which aren't,
+`done` can be accessed as the first (and only) argument:
+
+```javascript
+require(["jasq"], function () {
+
+  // If spec is associated with a module access 'done' as the third argument
+  describe("The modA module", "modA", function () {
+
+    it("should have a value of A, after a while", function (modA, dependencies, done) {
+      modA.getValueAfterAWhile(function (value) {
+        expect(value).toBe("A"); // Passes
+        done(); // Invoked to start the spec
+      });
+    });
+  });
+
+  // Otherwise access 'done' as the first (and only) argument
+  describe("Something", function () {
+
+    it("should happen after a while", function (done) {
+      setTimeout(function () {
+        done(); // Invoked to start the spec
+      }, 100);
+    });
+  });
+});
+```
+
 
 Set up
 ------
 
 `bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
 just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
-[RequireJS](https://github.com/jrburke/requirejs). A typical example of a `test.html` to kick
-off a test suite would be
+[RequireJS](https://github.com/jrburke/requirejs).
 
-```html
-<html>
-<head>
-  <title>Example Test Suite</title>
-  <link rel="stylesheet" type="text/css" href="vendor/jasmine/jasmine.css">
-  <script type="text/javascript" src="vendor/jasmine/jasmine.js"></script>
-  <script type="text/javascript" src="vendor/jasmine/jasmine-html.js"></script>
-  <script type="text/javascript" data-main="main.js" src="vendor/require.js"></script>
-</head>
-
-<body>
-</body>
-</html>
-```
-
-with an accompanying `main.js`:
-
-```javascript
-// Configure require
-require.config({
-    baseUrl: "base/path/to/tested/modules",
-    paths: {
-        jasq: "path/to/jasq"
-    }
-});
-
-// Configure Jasmine
-var
-  jasmineEnv = jasmine.getEnv(),
-  htmlReporter = new jasmine.HtmlReporter();
-jasmineEnv.addReporter(htmlReporter);
-jasmineEnv.specFilter = function (spec) {
-    return htmlReporter.specFilter(spec);
-};
-
-// Require the spec and run suite once loaded
-require(["path/to/spec"], function () {
-  jasmineEnv.execute();
-});
-```
+For a typical example of test-runner configuration please take a look a the project's
+[example directory](https://github.com/biril/jasq/tree/master/example).
 
 
 License
