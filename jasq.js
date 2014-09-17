@@ -45,11 +45,6 @@ define(function () {
       });
       return target;
     },
-    cloneArray = function (array) {
-      var clone = [];
-      each(array, function (element) { clone.push(element); });
-      return clone;
-    },
 
     // Generate a context-id for given `suiteDescription` / `specDescription` pair
     createContextId = (function () {
@@ -94,101 +89,32 @@ define(function () {
       return null;
     },
 
-    // Get the 'path' of given suite. A suite's path is defined as an array of suite
-    //  descriptions where
-    //  * `path[0]`: descr. of the top-level suite == (n-1)th parent of current suite
-    //  * `path[1]`: descr. of (n-2)th parent of current suite
-    //  * `path[path.length - 1]`: descr. of current suite
-    getSuitePath = function (suite) {
-      var suitePath = [];
-      while (suite) {
-        suitePath.unshift(suite.description);
-        suite = suite.parentSuite;
-      }
-      return suitePath;
-    },
-
-    // Path of the 'current suite'. Holds the path of the suite that is currently being defined
-    //  OR currently being executed - these never overlap
-    curSuitePath = [],
-
-    // A collection of test-suite configurations. A configuration is uniquely identified by the
-    //  path of the suite it refers to and includes the (name of the) module under test and
-    //  optionally a mocking function. The module specified in the suite's configuration will
-    //  be made available to all specs defined within that (or any _nested_) suite. The mocking
-    //  function, if present in the configuration, will be invoked on every spec to instantiate
-    //  mocks. (Mocks defined on the spec itself (in the specConfig provided during the
+    // A stack of suite configs, the topmost being the 'current'. For each jasq-`describe` call
+    //  (i.e. those that define a module and only those) a config is pushed to the stack which
+    //  includes the (name of the) module under test and optionally a mocking function. The module
+    //  will be made available to all specs defined within _that_ (or any _nested_) suite. The
+    //  mocking function, if present in the configuration, will be invoked on every spec to
+    //  instantiate mocks. (Mocks defined on the spec itself (in the specConfig provided during the
     //  invocation of `it`) will override those defined in the suiteConfig)
-    //
-    // Suite configs are added to the collection during `describe`. They are removed by the
-    //  `SuiteConfigSweeper` jasmine reporter, when suites are complete
-    suiteConfigs = (function () {
-        var
-          configs = [],
-          areEqualSuitePaths = function (p1, p2) {
-            for (var i = Math.max(p1.length, p2.length) - 1; i >= 0; --i) {
-              if (p1[i] !== p2[i]) { return false; }
-            }
-            return true;
-          },
-          findBySuitePath = function (suitePath, callbacks) {
-            isFunction(callbacks) && (callbacks = { onFound: callbacks });
-            callbacks.onFound || (callbacks.onFound = noOp);
-            callbacks.onNotFound || (callbacks.onNotFound = noOp);
-            for (var i = configs.length - 1; i >= 0; --i) {
-              if (areEqualSuitePaths(configs[i].suitePath, suitePath)) {
-                return callbacks.onFound(i);
-              }
-            }
-            return callbacks.onNotFound();
-          };
-
-        return {
-          add: function (suitePath, moduleName, mock) {
-            return findBySuitePath(suitePath, {
-              onFound: function () {
-                throw "Cannot add mapping - suite '" + suitePath + "' already has module '" + moduleName + "' mapped to it";
-              },
-              onNotFound: function () {
-                configs.push({
-                  suitePath: cloneArray(suitePath),
-                  moduleName: moduleName,
-                  mock: mock
-                });
-              }
-            });
-          },
-          remove: function (suitePath, failHard) {
-            return findBySuitePath(suitePath, {
-              onFound: function (i) {
-                return configs.splice(i, 1);
-              },
-              onNotFound: function () {
-                if (failHard) {
-                  throw "Cannot remove mapping - suite '" + suitePath + "'' not present in mappings";
-                }
-              }
-            });
-          },
-          get: function (suitePath, failHard) {
-            var found = null;
-            while (suitePath.length) {
-              found = findBySuitePath(suitePath, function (i) {
-                return configs[i];
-              });
-
-              if (found) {
-                return found;
-              }
-
-              suitePath.pop();
-            }
-            if (failHard) {
-              throw "Cannot get module for suite '" + suitePath + "' - given suite not present in mappings";
-            }
-            return null;
-          }
-        };
+    _suiteConfigs = (function () {
+      var sc = [];
+      // Get the current suite-config. Or a falsy value if no such thing
+      sc.getCurrent = function () {
+        return sc[sc.length - 1];
+      };
+      // Get the path of the current suite-config. Or an empty array if no such thing
+      //  A suite's path is defined as an array of suite descriptions where
+      //   * `path[0]`: descr. of the top-level suite == (n-1)th parent of current suite
+      //   * `path[1]`: descr. of (n-2)th parent of current suite
+      //   * `path[path.length - 1]`: descr. of current suite
+      sc.getCurrentPath = function () {
+        var p = [];
+        each(sc, function () {
+          p.push(sc.description);
+        });
+        return p;
+      };
+      return sc;
     }()),
 
     //
@@ -216,13 +142,13 @@ define(function () {
       var contextId, load, suiteConfig, mock;
 
       // Mods will load in a new requirejs context, specific to this spec. This is its id
-      contextId = createContextId(curSuitePath, specDescription);
+      contextId = createContextId(_suiteConfigs.getCurrentPath(), specDescription);
 
       // Create the context, configuring require appropriately and obtaining a loader
       load = configRequireForContext(contextId);
 
-      // Configuration of current suite (name of module to load & mock function, if any)
-      suiteConfig = suiteConfigs.get(curSuitePath) || {};
+      // Configuration of current suite (name of module to load & mock function)
+      suiteConfig = _suiteConfigs.getCurrent();
 
       // Modules to mock, as specified at the suite level as well as the spec level
       mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
@@ -273,28 +199,27 @@ define(function () {
         //  `args` will contain the expected `moduleName`, `mock` and `specify` properties if they
         //  are, or will be `null` if they're not. In the latter case, just delegate to the native
         //  jasmine version
-        if(!(args = parseArgsForJasqDescribe(arguments))) {
+        if (!(args = parseArgsForJasqDescribe(arguments))) {
           return jasmineDescribe.apply(null, arguments);
         }
 
-        // Set the current suite-path to the path of this suite. All specs defined within this
-        //  suite (but not nested suites) will make use the suite-config mapped to this suite-path.
-        //  When the all nested specs / suites are defined, the current suite-path will be set back
-        //  to its previous value - the parent-suite path
-        curSuitePath.push(suiteDescription);
+        // Push the current suite-config onto the stack of suite-configs, making it the current
+        //  suite-config. All specs (and nested suites) will make use of this configuration. (if
+        //  this is an `xdescribe` call, it makes no difference as the suite's specs will never
+        //  execute anyway. However, it's simpler to always `push` here and always `pop` later,
+        //  avoiding an extra layer of logic)
+        _suiteConfigs.push({
+          description: suiteDescription,
+          moduleName: args.moduleName,
+          mock: args.mock
+        });
 
-        // Map a suite-config to the current suite-path (if this is an `xdescribe` call, this will
-        //  make no difference as the suite's specs will never execute. However, it's simpler to
-        //  always `push` here and always `pop` later - instead of adding more logic)
-        suiteConfigs.add(curSuitePath, args.moduleName, args.mock);
-
-        // Ultimately, the native Jasmine version is run. The crucial step was creating
-        //  the mapping above, for later use in `it`-specs
+        // Ultimately, the native Jasmine version is run. The crucial step was setting a
+        //  suite-config for further use in specs and nested suites
         suite = jasmineDescribe(suiteDescription, args.specify);
 
-        // Set the current suite-path back to its previous value - the parent-suite path
-        suiteConfigs.remove(curSuitePath);
-        curSuitePath.pop();
+        // Pop the current suite-config
+        _suiteConfigs.pop();
 
         return suite;
       };
@@ -316,11 +241,11 @@ define(function () {
       //          `module` and `dependencies` arguments
       return function (specDescription, specConfig) {
 
-        // In the event that there's no mapped module to pass to the spec the just run the
-        //  native Jasmine version - this will avoid forcing spec to run asynchronously.
-        //  Also run the native version in the case the the caller invoked `xit` - the spec
-        //  will not execute so there's no reason to incur the module (re)loading overhead
-        if (!suiteConfigs.get(curSuitePath) || isX) {
+        // In the event that there's no current suite-config (no module to pass to the spec) then
+        //  just run the native Jasmine version - this will avoid forcing spec to run
+        //  asynchronously. Also run the native version in the case the the caller invoked `xit` -
+        //  the spec will not execute so there's no reason to incur the module (re)loading overhead
+        if (!_suiteConfigs.getCurrent() || isX) {
 
           // We tolerate the caller passing an expectation-hash into a spec which is not nested
           //  within a jasq-suite - in this case we're only interested in the expectation-function
