@@ -96,7 +96,7 @@ define(function () {
     //  mocking function, if present in the configuration, will be invoked on every spec to
     //  instantiate mocks. (Mocks defined on the spec itself (in the specConfig provided during the
     //  invocation of `it`) will override those defined in the suiteConfig)
-    _suiteConfigs = (function () {
+    suiteConfigs = (function () {
       var sc = [];
       // Get the current suite-config. Or a falsy value if no such thing
       sc.getCurrent = function () {
@@ -142,13 +142,13 @@ define(function () {
       var contextId, load, suiteConfig, mock;
 
       // Mods will load in a new requirejs context, specific to this spec. This is its id
-      contextId = createContextId(_suiteConfigs.getCurrentPath(), specDescription);
+      contextId = createContextId(suiteConfigs.getCurrentPath(), specDescription);
 
       // Create the context, configuring require appropriately and obtaining a loader
       load = configRequireForContext(contextId);
 
       // Configuration of current suite (name of module to load & mock function)
-      suiteConfig = _suiteConfigs.getCurrent();
+      suiteConfig = suiteConfigs.getCurrent();
 
       // Modules to mock, as specified at the suite level as well as the spec level
       mock = extend(suiteConfig.mock ? suiteConfig.mock() : {}, specConfig.mock);
@@ -208,7 +208,7 @@ define(function () {
         //  this is an `xdescribe` call, it makes no difference as the suite's specs will never
         //  execute anyway. However, it's simpler to always `push` here and always `pop` later,
         //  avoiding an extra layer of logic)
-        _suiteConfigs.push({
+        suiteConfigs.push({
           description: suiteDescription,
           moduleName: args.moduleName,
           mock: args.mock
@@ -219,7 +219,7 @@ define(function () {
         suite = jasmineDescribe(suiteDescription, args.specify);
 
         // Pop the current suite-config
-        _suiteConfigs.pop();
+        suiteConfigs.pop();
 
         return suite;
       };
@@ -245,7 +245,7 @@ define(function () {
         //  just run the native Jasmine version - this will avoid forcing spec to run
         //  asynchronously. Also run the native version in the case the the caller invoked `xit` -
         //  the spec will not execute so there's no reason to incur the module (re)loading overhead
-        if (!_suiteConfigs.getCurrent() || isX) {
+        if (!suiteConfigs.getCurrent() || isX) {
 
           // We tolerate the caller passing an expectation-hash into a spec which is not nested
           //  within a jasq-suite - in this case we're only interested in the expectation-function
