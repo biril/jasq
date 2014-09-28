@@ -294,8 +294,8 @@ require(["jasq"], function () {
       });
 
       // modA will use the mocked version of modB, unmodified
-      window.it("should expose modB's value - again", function (modA) {
-        window.expect(modA.getModBValue()).toBe("C"); // Passes
+      it("should expose modB's value - again", function (modA) {
+        expect(modA.getModBValue()).toBe("C"); // Passes
       });
     }
   });
