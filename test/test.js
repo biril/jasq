@@ -1247,6 +1247,34 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     }).execute();
   });
 
+  asyncTest("Module dependencies' state is not persisted across specs", 2, function () {
+
+    var
+      theOmeletteModule                      = "The Omelette Module (suite)",
+      depShouldHaveStateModified             = "its dependency should have its state potentially modified in specs (spec)",
+      depShouldNotHaveModifiedStatePersisted = "its dependency should not have modified state persisted from previous specs (spec)";
+
+    suiteWatcher.onCompleted(theOmeletteModule, function (suite) {
+      okSpec(suite, depShouldNotHaveModifiedStatePersisted);
+      okSpec(suite, depShouldHaveStateModified);
+      start();
+    });
+
+    // A Jasq suite which describes the 'Omelette' module
+    window.describe(theOmeletteModule, "omelette", function () {
+
+      window.it(depShouldHaveStateModified, function (omelette, deps) {
+        deps.eggs.isEaten = true;
+        window.expect(deps.eggs.isEaten).toBe(true);
+      });
+
+      window.it(depShouldNotHaveModifiedStatePersisted, function (omelette, deps) {
+        window.expect(deps.eggs.isEaten).toBeUndefined();
+      });
+
+    }).execute();
+  });
+
   asyncTest("A module-defining function may be used to mock object-returning-modules", 1, function () {
 
     var
