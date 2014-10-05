@@ -17,10 +17,10 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
-    "bower_components",
-    "test",
+    "bower_components/",
+    "test/",
     "docs/",
-    "example"
+    "example/"
   ],
   "dependencies": {
     "requirejs": "2.1.x"
