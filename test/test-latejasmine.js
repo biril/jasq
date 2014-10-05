@@ -1,5 +1,5 @@
 /*jshint browser:true */
-/*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, throws, jasmineRequire */
+/*global require, define, QUnit, test, asyncTest, ok, strictEqual, start, throws, jasmineRequire */
 define(["helpers", "jasq"], function (helpers, jasq) {
   "use strict";
 

@@ -1,13 +1,10 @@
 /*jshint browser:true */
-/*global require, define, QUnit, test, asyncTest, ok, strictEqual, deepEqual, start, stop, jasmine */
-define(["helpers", "jasq"], function (helpers, jasq) {
+/*global define, QUnit, asyncTest, start, jasmine */
+define(["helpers", "jasq"], function (helpers) {
   "use strict";
 
   var
-    isFunction   = helpers.isFunction,
-    each         = helpers.each,
     okSpec       = helpers.okSpec,
-    okSuite      = helpers.okSuite,
     suiteWatcher = helpers.startSuiteWatcher(jasmine);
 
   ////////////////////////////////////
@@ -47,7 +44,7 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     suiteWatcher.onCompleted([theModAModule, itsValue], function (suite) {
       okSpec(suite, shouldBeA);
     });
-    suiteWatcher.onCompleted(theModAModule, function (suite) {
+    suiteWatcher.onCompleted(theModAModule, function (/* suite */) {
       start();
     });
 

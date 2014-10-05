@@ -10,7 +10,6 @@ define(["helpers", "jasq"], function (helpers, jasq) {
     find             = helpers.find,
 
     okSpec       = helpers.okSpec,
-    okSuite      = helpers.okSuite,
     suiteWatcher = helpers.startSuiteWatcher(jasmine),
 
     globalMethodNames = ["describe", "xdescribe", "it", "xit"],
