@@ -1,6 +1,7 @@
 Jasq
 ====
 
+[![Build Status](https://travis-ci.org/biril/jasq.png)](https://travis-ci.org/biril/jasq)
 [![Bower version](https://badge.fury.io/bo/jasq.png)](http://badge.fury.io/bo/jasq)
 
 [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) dependency injector integrated with
