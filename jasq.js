@@ -1,5 +1,5 @@
 //     Jasq v0.4.0 - AMD dependency injector integrated with Jasmine
-
+//
 //     https://github.com/biril/jasq
 //     Licensed and freely distributed under the MIT License
 //     Copyright (c) 2013-2014 Alex Lambiris
@@ -46,6 +46,23 @@ define(function () {
       return target;
     },
 
+    //
+    jasmineApiNames = ["describe", "xdescribe", "it", "xit"],
+
+    // Jasmine's native (non-jasq-patched) global API
+    jasmineNativeApi = {},
+
+    //
+    jasmineEnv = null,
+
+    //
+    jasq = {},
+
+    // Get a value indicating whether Jasmine is available on the global scope
+    isJasmineInGlobalScope = function () {
+      return window.jasmine && isFunction(window.jasmine.getEnv);
+    },
+
     // Generate a context-id for given `suiteDescription` / `specDescription` pair
     createContextId = (function () {
       var uid = 0;
@@ -66,29 +83,8 @@ define(function () {
       return require.config(c);
     },
 
-    // Parse arguments given when invoking the jasq-version of `descibe` / `xdescribe` and
-    //  return a hash containing `moduleName`, `mock` and `specify`. Return null if the
-    //  arguments are such that should be handled by Jasmine's native `describe` instead. For
-    //  the jasq-version, we're expecting
-    //   * 1. suite description (string)
-    //   * 2. module name (string)
-    //   * 3. spec definitions (function)
-    // OR
-    //   * 1. suite description (string)
-    //   * 2. suite config (object)
-    parseArgsForJasqDescribe = function (args) {
-      if (isString(args[0]) && isString(args[1]) && isFunction(args[2])) {
-        return {
-          moduleName: args[1],
-          specify: args[2]
-        };
-      }
 
-      if (isString(args[0]) && isStrictlyObject(args[1])) { return args[1]; }
-
-      return null;
-    },
-
+    // ### suiteConfigs
     // A stack of suite configs, the topmost being the 'current'. For each jasq-`describe` call
     //  (i.e. those that define a module and only those) a config is pushed to the stack which
     //  includes the (name of the) module under test and optionally a mocking function. The module
@@ -96,6 +92,8 @@ define(function () {
     //  mocking function, if present in the configuration, will be invoked on every spec to
     //  instantiate mocks. (Mocks defined on the spec itself (in the specConfig provided during the
     //  invocation of `it`) will override those defined in the suiteConfig)
+
+    //
     suiteConfigs = (function () {
       var sc = [];
       // Get the current suite-config. Or a falsy value if no such thing
@@ -117,26 +115,13 @@ define(function () {
       return sc;
     }()),
 
-    //
-    jasmineEnv = null,
 
-    // Jasmine's native (non-jasq-patched) global API
-    jasmineNativeApi = {},
-
-    //
-    apiNames = ["describe", "xdescribe", "it", "xit"],
-
-    //
-    jasq = {},
-
-    // Get a value indicating whether Jasmine is available on the global scope
-    isJasmineInGlobalScope = function () {
-      return window.jasmine && isFunction(window.jasmine.getEnv);
-    },
-
+    // ### createJasqSpec
     // Create a function to execute the spec of given `specDescription` and `specConfig` after
     //  (re)loading the tested module and mocking its dependencies as specified at the (current)
     //  suite and (given) spec level
+
+    //
     createJasqSpec = function (specDescription, specConfig) {
 
       var contextId, load, suiteConfig, mock;
@@ -176,32 +161,48 @@ define(function () {
       };
     },
 
+
+    // ### describe
     // Get the jasq version of Jasmine's `(x)describe`
+
+    //
     getJasqDescribe = function (isX) {
 
       var jasmineDescribe = jasmineNativeApi[isX ? "xdescribe" : "describe"];
 
-      // Jasq version
+      // `(x)describe`, Jasq version
       //  * `suiteDescription`: Description of this suite, as in Jasmine's native `describe`
       //  * `moduleName`: Name of the module to which this test suite refers
       //  * `specify`: The function to execute the suite's specs, as in Jasmine's `describe`
+      //
       // OR
       //  * `suiteDescription`: Description of this suite, as in Jasmine's native `describe`
-      //  * `suiteConfig`: Configuration of the suite containing
+      //  * `suiteConfig`: Configuration of the suite. A hash containing
       //      * `moduleName`: Name of the module to which this test suite refers
       //      * `mock`: Optionally a function that returns a hash of mocks
       //      * `specify`: The function to execute the suite's specs
+
+      //
       return function (suiteDescription) {
 
         var args, suite;
 
         // Parse given arguments as if they were suitable for the jasq-version of `describe`.
         //  `args` will contain the expected `moduleName`, `mock` and `specify` properties if they
-        //  are, or will be `null` if they're not. In the latter case, just delegate to the native
+        //  are, or will be falsy if they're not. In the latter case, just delegate to the native
         //  jasmine version
-        if (!(args = parseArgsForJasqDescribe(arguments))) {
-          return jasmineDescribe.apply(null, arguments);
-        }
+        args = (function (args) {
+          // Either `suiteDescription`, `moduleName`, `specify` ..
+          if (isString(args[0]) && isString(args[1]) && isFunction(args[2])) {
+            return { moduleName: args[1], specify: args[2] };
+          }
+          // .. or `suiteDescription`, `suiteConfig`
+          if (isString(args[0]) && isStrictlyObject(args[1])) {
+            return args[1];
+          }
+        }(arguments));
+
+        if (!args) { return jasmineDescribe.apply(null, arguments); }
 
         // Push the current suite-config onto the stack of suite-configs, making it the current
         //  suite-config. All specs (and nested suites) will make use of this configuration. (if
@@ -225,20 +226,26 @@ define(function () {
       };
     },
 
+
+    // ### it
     // Get the jasq version of Jasmine's `(x)it`
+
+    //
     getJasqIt = function (isX) {
 
       var jasmineIt = jasmineNativeApi[isX ? "xit" : "it"];
 
-      // Jasq version
+      // `(x)it`, Jasq version
       //  * `specDescription`: Description of this spec, as in Jasmine's native `it`
-      //  * `specConfig`: A hash containing:
+      //  * `specConfig`: Configuration of the spec. A hash containing:
       //      * `store`: An array of neames of the modules to 'store': These will be
       //          exposed in the spec through `dependencies.store` - a hash of modules
       //      * `mock`: A hash of mocks, mapping module (name) to mock. These will be
       //          exposed in the spec through `dependencies.mocks` - a hash of modules
       //      * `expect`: The expectation function: A callback to be invoked with
       //          `module` and `dependencies` arguments
+
+      //
       return function (specDescription, specConfig) {
 
         // In the event that there's no current suite-config (no module to pass to the spec) then
@@ -266,8 +273,12 @@ define(function () {
       };
     },
 
-    // Init: Ensure that `jasmineEnv` and `jasmineNativeApi` have been set and create the
-    //  patched version of Jasmine's API. It will only run once
+
+    // ### init
+    // Ensure that `jasmineEnv` and `jasmineNativeApi` have been set and create the
+    //  patched version of Jasmine's API. Will only run once
+
+    //
     init = function () {
       if (!isJasmineInGlobalScope()) {
         throw "Jasmine is not available in global scope (not loaded?)";
@@ -275,7 +286,7 @@ define(function () {
 
       // Store Jasmine's globals
       jasmineEnv = window.jasmine.getEnv();
-      each(apiNames, function (name) { jasmineNativeApi[name] = window[name]; });
+      each(jasmineApiNames, function (name) { jasmineNativeApi[name] = window[name]; });
 
       // Create patched version of Jasmine's API
       jasq.describe  = getJasqDescribe();
@@ -283,7 +294,7 @@ define(function () {
       jasq.it        = getJasqIt();
       jasq.xit       = getJasqIt(true);
 
-      each(apiNames, function (name) { jasq[name].isJasq = true; });
+      each(jasmineApiNames, function (name) { jasq[name].isJasq = true; });
 
       // Don't `init` more than once
       init = noOp;
@@ -292,13 +303,13 @@ define(function () {
   //
   jasq.applyGlobals = function () {
     init();
-    each(apiNames, function (name) { window[name] = jasq[name]; });
+    each(jasmineApiNames, function (name) { window[name] = jasq[name]; });
   };
 
   //
   jasq.resetGlobals = function () {
     init();
-    each(apiNames, function (name) { window[name] = jasmineNativeApi[name]; });
+    each(jasmineApiNames, function (name) { window[name] = jasmineNativeApi[name]; });
   };
 
   // If Jasmine is already in global scope then go ahead and apply globals - this will also
