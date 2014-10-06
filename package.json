@@ -24,6 +24,7 @@
     "docco": "0.6.x"
   },
   "scripts": {
+    "test": "phantomjs ./test/testrunner-phantom.js ./test/test.html",
     "lint": "jshint --show-non-errors jasq.js test/testrunner.js test/test-*.js",
     "doc": "docco jasq.js"
   },
