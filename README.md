@@ -382,6 +382,19 @@ For a typical example of test-runner configuration please take a look a the proj
 [example directory](https://github.com/biril/jasq/tree/master/example).
 
 
+Testing / Contributing
+----------------------
+
+The QUnit test suite may be run in a browser (test/test.html) or on the command line, by
+`npm test`. Note that the latter requires an installation of [phantomjs](http://phantomjs.org).
+
+Contributions are obviously appreciated. Please commit your changes on the `dev` branch - not
+`master`. `dev` is always ahead, contains the latest state of the project and is periodically
+merged back to `master` with the appropriate version bump. In lieu of a formal styleguide, take
+care to maintain the existing coding style. Please make sure your changes test out green prior to
+pull requests.
+
+
 License
 -------
 
