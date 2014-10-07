@@ -77,6 +77,13 @@ with [Jasmine, versions >= 2.0.0](https://github.com/pivotal/jasmine/releases). 
 revision is tested against Jamsine v2.0.2 and only in a browser environment - support for Node is
 work in progress.
 
+The following examples, while not a complete reference, should be a cover all essential use cases
+for Jasq. Further insight may be gained by taking a look
+[the included example](https://github.com/biril/jasq/tree/master/example),
+[the project's test suite](https://github.com/biril/jasq/tree/master/test) and - of course -
+[the source](https://github.com/biril/jasq/blob/master/jasq.js). For the latter, an
+[annotated version](http://biril.github.io/jasq/) is also maintained.
+
 
 Jasq by example
 ---------------
@@ -378,8 +385,8 @@ Set up
 just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
 [RequireJS](https://github.com/jrburke/requirejs).
 
-For a typical example of test-runner configuration please take a look a the project's
-[example directory](https://github.com/biril/jasq/tree/master/example).
+For a typical example of test-runner configuration please take a look a the included
+[example test suite](https://github.com/biril/jasq/tree/master/example).
 
 
 Testing / Contributing
