@@ -1,6 +1,6 @@
 {
   "name": "jasq",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "biril <alexlambiris@gmail.com>",
   "description": "AMD dependency injector integrated with Jasmine",
   "private": true,
