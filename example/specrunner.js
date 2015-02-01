@@ -20,19 +20,18 @@
   //  to the `jasmine` reference
   window.jasmine = jasmineRequire.core(jasmineRequire);
 
-  // Since this is being run in a browser and the results should populate to an HTML page, require
-  //  the HTML-specific Jasmine code, injecting the same reference
+  // Since this is being run in a browser and the results are to be rendered on a page,
+  //  require the HTML-specific Jasmine code, injecting the same reference
   jasmineRequire.html(window.jasmine);
 
-  // Create the Jasmine environment. This is used to run all specs in a project
+  // Create the Jasmine environment. This is used to run all specs in the project
   var env = window.jasmine.getEnv();
 
-  // Build up the functions that will be exposed as the Jasmine public interface
+  // Build up the functions to be exposed as Jasmine's public interface
   var jasmineInterface = jasmineRequire.interface(window.jasmine, env);
 
-  // Add all of the Jasmine global/public interface to window, so a project can use the public
-  //  interface directly. For example, calling `describe` in specs instead of
-  //  `jasmine.getEnv().describe`
+  // Add Jasmine's public interface to window, so that the project may use it directly - for
+  //  example, calling `describe` in specs instead `jasmine.getEnv().describe`
   for (var prop in jasmineInterface) {
     if (jasmineInterface.hasOwnProperty(prop)) {
       window[prop] = jasmineInterface[prop];
@@ -70,8 +69,8 @@
     return specFilter.matches(spec.getFullName());
   };
 
-  // Setting up timing functions to be able to be overridden. Certain browsers (Safari, IE 8,
-  //  phantomjs) require this hack
+  // Hack that allows timing functions to be overridden, if necessary. Certain browsers
+  //  (Safari, IE8, phantomjs) require this hack
   window.setTimeout = window.setTimeout;
   window.setInterval = window.setInterval;
   window.clearTimeout = window.clearTimeout;
