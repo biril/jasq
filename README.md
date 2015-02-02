@@ -74,7 +74,7 @@ it("should do something", {
 
 Jasq uses [RequireJS](https://github.com/jrburke/requirejs) for loading modules and is compatible
 with [Jasmine, versions >= 2.0.0](https://github.com/pivotal/jasmine/releases). The current
-revision is tested against Jamsine v2.0.2 and only in a browser environment - support for Node is
+revision is tested against Jasmine v2.0.2 and only in a browser environment - support for Node is
 work in progress.
 
 The following examples, while not a complete reference, should cover all essential use cases for
