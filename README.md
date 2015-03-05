@@ -378,6 +378,40 @@ require(["jasq"], function () {
 ```
 
 
+Now, don't use it
+-----------------
+
+As an aside, it's worth noting that suites making use of Jasq _will_ incur some added overhead.
+Reloading the relevant module(s) per spec relies on appending `<script>` tags into the document as
+the suite executes. Additionally it introduces an extra layer of asynchronicity as every spec
+essentially becomes async. There's a also a price to pay in terms of congitive load as Jasq suites
+are arguably less readable than their plain 'ol Jasmine counterparts.
+
+However, regardless of specifics concerning performance, it's worth noting that **Ideally** a
+project should not rely on any form of injection _at the module loader level_ - even if only for
+the purposes of testing. The opposite may often be a result of less than optimal design choices
+presenting as testing impediments. In particular, the value in Jasq's spec-atomicity and
+dependency-mocking features is often rooted in such patterns as (ab)use of singletons and tight
+coupling between components.
+
+Indeed, the impracticality of reverting singleton instances to some known state _after their
+initial instantiation_, leads to the need for their containing modules to be re-loaded _per test_
+- if those tests are to be atomic. The same can be said for any module which has side effects
+- introduces state - at load-time. Contrary to this, non-singleton components that don't 'leak
+state' may simply be loaded once and instantiated anew, per test.
+
+Similarly, a requirement for dependency injection at the module loader level may be indicative of
+tightly coupled components within the application. A DI pattern at the application level will
+mitigate tight coupling and allow for tests where mocks can be injected in a straightforward manner
+(e.g. as constructor parameters) without the loader's involvement.
+
+Having said that, there's valid use-cases for Jasq. For example tight coupling may be unavoidable
+within design constraints that lie outside the author's control. Such as those introduced by the
+use of a specific framework. Authors may choose to leverage Jasq on a per-unit basis, rather than
+across the entirety of the project's test suite, minimizing the relevant overhead to where
+necessary.
+
+
 Set up
 ------
 
