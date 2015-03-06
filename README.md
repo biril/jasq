@@ -378,6 +378,17 @@ require(["jasq"], function () {
 ```
 
 
+Set up
+------
+
+`bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
+just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
+[RequireJS](https://github.com/jrburke/requirejs).
+
+For a typical example of test-runner configuration please take a look a the included
+[example test suite](https://github.com/biril/jasq/tree/master/example).
+
+
 Now, don't use it
 -----------------
 
@@ -410,17 +421,6 @@ within design constraints that lie outside the author's control. Such as those i
 use of a specific framework. Authors may choose to leverage Jasq on a per-unit basis, rather than
 across the entirety of the project's test suite, minimizing the relevant overhead to where
 necessary.
-
-
-Set up
-------
-
-`bower install jasq` to obtain the latest Jasq plus dependencies. If you prefer to avoid bower,
-just include [jasq.js](https://raw.github.com/biril/jasq/master/jasq.js) in your project along with
-[RequireJS](https://github.com/jrburke/requirejs).
-
-For a typical example of test-runner configuration please take a look a the included
-[example test suite](https://github.com/biril/jasq/tree/master/example).
 
 
 Testing / Contributing
