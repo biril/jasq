@@ -395,9 +395,9 @@ dependency-mocking features is often rooted in such patterns as (ab)use of singl
 coupling between components.
 
 Indeed, the impracticality of reverting singleton instances to some known state _after their
-initial instantiation_, leads to the need for their containing modules to be re-loaded _per test_
-- if those tests are to be atomic. The same can be said for any module which has side effects
-- introduces state - at load-time. Contrary to this, non-singleton components that don't 'leak
+initial instantiation_, leads to the need for their containing modules to be re-loaded _per test_ -
+if those tests are to be atomic. The same can be said for any module which has side effects -
+introduces state - at load-time. Contrary to this, non-singleton components that don't 'leak
 state' may simply be loaded once and instantiated anew, per test.
 
 Similarly, a requirement for dependency injection at the module loader level may be indicative of
