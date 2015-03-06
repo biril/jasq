@@ -82,7 +82,8 @@ Jasq. Further insight may be gained by taking a look
 [the included example](https://github.com/biril/jasq/tree/master/example),
 [the project's test suite](https://github.com/biril/jasq/tree/master/test) and - of course -
 [the source](https://github.com/biril/jasq/blob/master/jasq.js). For the latter, an
-[annotated version](http://biril.github.io/jasq/) is also maintained.
+[annotated version](http://biril.github.io/jasq/) is also maintained. Also, please consider
+[not using it](#now-dont-use-it).
 
 
 Jasq by example
