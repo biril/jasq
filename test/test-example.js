@@ -65,19 +65,19 @@ define(["helpers", "jasq"], function (helpers) {
 
     var
       theModAModule = "The modA module (suite)",
-      shouldHaveAValueOfAWhenTweaked = "should have a value of 'C' when tweaked (spec)",
-      shouldHaveAValueOfA = "should have a value of A (spec)";
+      shouldHaveAValueOfCWhenTweaked = "should have a value of 'C' when tweaked (spec)",
+      shouldHaveAValueOfA = "should have a value of 'A' (spec)";
 
     suiteWatcher.onCompleted(theModAModule, function (suite) {
       okSpec(suite, shouldHaveAValueOfA);
-      okSpec(suite, shouldHaveAValueOfAWhenTweaked);
+      okSpec(suite, shouldHaveAValueOfCWhenTweaked);
       start();
     });
 
     window.describe(theModAModule, "modA", function () {
 
       // This spec modifies modA
-      window.it(shouldHaveAValueOfAWhenTweaked, function (modA) {
+      window.it(shouldHaveAValueOfCWhenTweaked, function (modA) {
         modA.getValue = function () {
           return "C";
         };
